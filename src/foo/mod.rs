@@ -11,6 +11,7 @@ pub mod imp {
 use glib_ffi;
 use gobject_ffi;
 
+use glib::IsA;
 use glib::translate::*;
 
 use std::ptr;
@@ -28,16 +29,24 @@ impl Foo {
     pub fn new() -> Foo {
         unsafe { from_glib_full(imp::ex_foo_new()) }
     }
+}
 
-    pub fn increment(&self, inc: i32) -> i32 {
+pub trait FooExt {
+    fn increment(&self, inc: i32) -> i32;
+    fn get_counter(&self) -> i32;
+    fn get_name(&self) -> Option<String>;
+}
+
+impl<O: IsA<Foo>> FooExt for O {
+    fn increment(&self, inc: i32) -> i32 {
         unsafe { imp::ex_foo_increment(self.to_glib_none().0, inc) }
     }
 
-    pub fn get_counter(&self) -> i32 {
+    fn get_counter(&self) -> i32 {
         unsafe { imp::ex_foo_get_counter(self.to_glib_none().0) }
     }
 
-    pub fn get_name(&self) -> Option<String> {
+    fn get_name(&self) -> Option<String> {
         unsafe { from_glib_full(imp::ex_foo_get_name(self.to_glib_none().0)) }
     }
 }

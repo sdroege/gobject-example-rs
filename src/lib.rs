@@ -7,3 +7,4 @@ extern crate glib;
 extern crate libc;
 
 pub mod foo;
+pub mod bar;

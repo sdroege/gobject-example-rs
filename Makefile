@@ -1,6 +1,7 @@
 HEADERS = \
 	include/ex/ex.h \
-	include/ex/foo.h
+	include/ex/foo.h \
+	include/ex/bar.h
 
 all: Ex-0.1.gir Ex-0.1.typelib
 

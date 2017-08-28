@@ -17,7 +17,7 @@ use foo::Foo as FooWrapper;
 // Instance struct
 #[repr(C)]
 pub struct Foo {
-    parent: gobject_ffi::GObject,
+    pub parent: gobject_ffi::GObject,
 }
 
 // Class struct aka "vtable"
@@ -25,7 +25,8 @@ pub struct Foo {
 // Here we would store virtual methods and similar
 #[repr(C)]
 pub struct FooClass {
-    parent_class: gobject_ffi::GObjectClass,
+    pub parent_class: gobject_ffi::GObjectClass,
+    pub increment: Option<unsafe extern "C" fn(*mut Foo, inc: i32) -> i32>,
 }
 
 // We could put our data into the Foo struct above but that's discouraged nowadays so let's just
@@ -98,6 +99,12 @@ impl Foo {
         (*PRIV.parent_class).finalize.map(|f| f(obj));
     }
 
+    unsafe extern "C" fn increment_trampoline(this: *mut Foo, inc: i32) -> i32 {
+        let private = (*this).get_priv();
+
+        Foo::increment(&from_glib_none(this), private, inc)
+    }
+
     //
     // Safe implementations. These take the wrapper type, and not &Self, as first argument
     //
@@ -130,6 +137,11 @@ impl FooClass {
             gobject_klass.finalize = Some(Foo::finalize);
         }
 
+        {
+            let foo_klass = &mut *(klass as *mut FooClass);
+            foo_klass.increment = Some(Foo::increment_trampoline);
+        }
+
         PRIV.parent_class =
             gobject_ffi::g_type_class_peek_parent(klass) as *const gobject_ffi::GObjectClass;
     }
@@ -139,14 +151,15 @@ impl FooClass {
 // Public C functions below
 //
 
-// Trampolines to safe Rust implementations
+// Virtual method callers
 #[no_mangle]
 pub unsafe extern "C" fn ex_foo_increment(this: *mut Foo, inc: i32) -> i32 {
-    let private = (*this).get_priv();
+    let klass = (*this).get_class();
 
-    Foo::increment(&from_glib_none(this), private, inc)
+    (klass.increment.as_ref().unwrap())(this, inc)
 }
 
+// Trampolines to safe Rust implementations
 #[no_mangle]
 pub unsafe extern "C" fn ex_foo_get_counter(this: *mut Foo) -> i32 {
     let private = (*this).get_priv();
