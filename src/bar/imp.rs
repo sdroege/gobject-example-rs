@@ -104,8 +104,14 @@ impl Bar {
     //
     // Safe implementations. These take the wrapper type, and not &Self, as first argument
     //
-    fn increment(_this: &BarWrapper, private: &BarPrivate, inc: i32) -> i32 {
-        0
+    fn increment(this: &BarWrapper, private: &BarPrivate, inc: i32) -> i32 {
+        // We could do our own stuff here but instead we just chain
+        // up with twice the inc
+        //
+        // TODO: Ideally we would have safe wrappers around the virtual methods
+        unsafe {
+            ((*PRIV.parent_class).increment.as_ref().unwrap())(this.to_glib_none().0, 2 * inc)
+        }
     }
 }
 
