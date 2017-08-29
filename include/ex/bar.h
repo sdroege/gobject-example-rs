@@ -25,7 +25,7 @@ struct _ExBarClass {
 
 GType   ex_bar_get_type    (void);
 
-ExBar * ex_bar_new         (void);
+ExBar * ex_bar_new         (const gchar * name);
 
 G_END_DECLS
 

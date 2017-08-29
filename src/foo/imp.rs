@@ -8,6 +8,7 @@ use std::ptr;
 
 use std::cell::RefCell;
 
+use glib;
 use glib::translate::{from_glib_none, ToGlibPtr};
 
 use libc::c_char;
@@ -29,6 +30,11 @@ pub struct FooClass {
     pub increment: Option<unsafe extern "C" fn(*mut Foo, inc: i32) -> i32>,
 }
 
+#[repr(u32)]
+enum Properties {
+    PropName = 1,
+}
+
 // We could put our data into the Foo struct above but that's discouraged nowadays so let's just
 // keep it all in FooPrivate
 //
@@ -44,9 +50,11 @@ struct FooPrivate {
 // called from a single place ever and then only read it
 struct FooClassPrivate {
     parent_class: *const gobject_ffi::GObjectClass,
+    properties: *const Vec<*const gobject_ffi::GParamSpec>,
 }
 static mut PRIV: FooClassPrivate = FooClassPrivate {
     parent_class: 0 as *const _,
+    properties: 0 as *const _,
 };
 
 impl Foo {
@@ -99,6 +107,47 @@ impl Foo {
         (*PRIV.parent_class).finalize.map(|f| f(obj));
     }
 
+    unsafe extern "C" fn set_property(
+        obj: *mut gobject_ffi::GObject,
+        id: u32,
+        value: *mut gobject_ffi::GValue,
+        _pspec: *mut gobject_ffi::GParamSpec,
+    ) {
+        let this = &*(obj as *mut Foo);
+        let private = (*this).get_priv();
+
+        match id {
+            PropName => {
+                // FIXME: Need impl FromGlibPtrBorrow for Value
+                let name = gobject_ffi::g_value_get_string(value);
+                Foo::set_name(
+                    &from_glib_none(obj as *mut Foo),
+                    private,
+                    from_glib_none(name),
+                );
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    unsafe extern "C" fn get_property(
+        obj: *mut gobject_ffi::GObject,
+        id: u32,
+        value: *mut gobject_ffi::GValue,
+        _pspec: *mut gobject_ffi::GParamSpec,
+    ) {
+        let private = (*(obj as *mut Foo)).get_priv();
+
+        match id {
+            PropName => {
+                let name = Foo::get_name(&from_glib_none(obj as *mut Foo), private);
+                // FIXME: Need impl FromGlibPtrBorrow for Value
+                gobject_ffi::g_value_set_string(value, name.to_glib_none().0);
+            }
+            _ => unreachable!(),
+        }
+    }
+
     unsafe extern "C" fn increment_trampoline(this: *mut Foo, inc: i32) -> i32 {
         let private = (*this).get_priv();
 
@@ -123,6 +172,10 @@ impl Foo {
     fn get_name(_this: &FooWrapper, private: &FooPrivate) -> Option<String> {
         private.name.borrow().clone()
     }
+
+    fn set_name(_this: &FooWrapper, private: &FooPrivate, name: Option<String>) {
+        *private.name.borrow_mut() = name;
+    }
 }
 
 impl FooClass {
@@ -135,6 +188,30 @@ impl FooClass {
         {
             let gobject_klass = &mut *(klass as *mut gobject_ffi::GObjectClass);
             gobject_klass.finalize = Some(Foo::finalize);
+            gobject_klass.set_property = Some(Foo::set_property);
+            gobject_klass.get_property = Some(Foo::get_property);
+
+            let mut properties = Vec::new();
+
+            let name_cstr = CString::new("name").unwrap();
+            let nick_cstr = CString::new("Name").unwrap();
+            let blurb_cstr = CString::new("Name of the object").unwrap();
+
+            properties.push(ptr::null());
+            properties.push(gobject_ffi::g_param_spec_string(
+                name_cstr.as_ptr(),
+                nick_cstr.as_ptr(),
+                blurb_cstr.as_ptr(),
+                ptr::null_mut(),
+                gobject_ffi::G_PARAM_READWRITE | gobject_ffi::G_PARAM_CONSTRUCT_ONLY,
+            ));
+            gobject_ffi::g_object_class_install_properties(
+                gobject_klass,
+                properties.len() as u32,
+                properties.as_mut_ptr() as *mut *mut _,
+            );
+
+            PRIV.properties = Box::into_raw(Box::new(properties));
         }
 
         {
@@ -176,8 +253,26 @@ pub unsafe extern "C" fn ex_foo_get_name(this: *mut Foo) -> *mut c_char {
 
 // GObject glue
 #[no_mangle]
-pub unsafe extern "C" fn ex_foo_new() -> *mut Foo {
-    let this = gobject_ffi::g_object_newv(ex_foo_get_type(), 0, ptr::null_mut());
+pub unsafe extern "C" fn ex_foo_new(name: *const c_char) -> *mut Foo {
+    // FIXME: need to prevent the string copies (property name and the value) here
+    let prop_name_name = "name".to_glib_none();
+    let prop_name_str: Option<String> = from_glib_none(name);
+    let prop_name_value = glib::Value::from(prop_name_str.as_ref());
+
+    let mut properties = [
+        gobject_ffi::GParameter {
+            name: prop_name_name.0,
+            value: prop_name_value.into_raw(),
+        },
+    ];
+    let this = gobject_ffi::g_object_newv(
+        ex_foo_get_type(),
+        properties.len() as u32,
+        properties.as_mut_ptr(),
+    );
+
+    // FIXME: Ugly
+    gobject_ffi::g_value_unset(&mut properties[0].value);
 
     this as *mut Foo
 }

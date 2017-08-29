@@ -8,6 +8,7 @@ use std::ptr;
 
 use std::cell::RefCell;
 
+use glib;
 use glib::translate::{from_glib_none, ToGlibPtr};
 
 use libc::c_char;
@@ -143,8 +144,26 @@ impl BarClass {
 
 // GObject glue
 #[no_mangle]
-pub unsafe extern "C" fn ex_bar_new() -> *mut Bar {
-    let this = gobject_ffi::g_object_newv(ex_bar_get_type(), 0, ptr::null_mut());
+pub unsafe extern "C" fn ex_bar_new(name: *const c_char) -> *mut Bar {
+    // FIXME: need to prevent the string copies (property name and the value) here
+    let prop_name_name = "name".to_glib_none();
+    let prop_name_str: Option<String> = from_glib_none(name);
+    let prop_name_value = glib::Value::from(prop_name_str.as_ref());
+
+    let mut properties = [
+        gobject_ffi::GParameter {
+            name: prop_name_name.0,
+            value: prop_name_value.into_raw(),
+        },
+    ];
+    let this = gobject_ffi::g_object_newv(
+        ex_bar_get_type(),
+        properties.len() as u32,
+        properties.as_mut_ptr(),
+    );
+
+    // FIXME: Ugly
+    gobject_ffi::g_value_unset(&mut properties[0].value);
 
     this as *mut Bar
 }

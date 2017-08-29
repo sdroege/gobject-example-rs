@@ -27,8 +27,8 @@ glib_wrapper! {
 }
 
 impl Bar {
-    pub fn new() -> Bar {
-        unsafe { from_glib_full(imp::ex_bar_new()) }
+    pub fn new(name: Option<&str>) -> Bar {
+        unsafe { from_glib_full(imp::ex_bar_new(name.to_glib_none().0)) }
     }
 }
 
@@ -39,14 +39,14 @@ mod tests {
 
     #[test]
     fn test_new() {
-        let bar = Bar::new();
+        let bar = Bar::new(Some("bar's name"));
 
         drop(bar);
     }
 
     #[test]
     fn test_counter() {
-        let bar = Bar::new();
+        let bar = Bar::new(Some("bar's name"));
 
         assert_eq!(bar.get_counter(), 0);
         assert_eq!(bar.increment(1), 2);
@@ -57,8 +57,9 @@ mod tests {
 
     #[test]
     fn test_name() {
-        let bar = Bar::new();
+        let bar = Bar::new(Some("bar's name"));
 
-        assert_eq!(bar.get_name(), None);
+        assert_eq!(bar.get_name(), Some("bar's name".into()));
+        assert_eq!(bar.get_property_name(), Some("bar's name".into()));
     }
 }

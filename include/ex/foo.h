@@ -25,7 +25,7 @@ struct _ExFooClass {
 
 GType   ex_foo_get_type    (void);
 
-ExFoo * ex_foo_new         (void);
+ExFoo * ex_foo_new         (const gchar * name);
 
 gint    ex_foo_increment   (ExFoo * foo, gint inc);
 gint    ex_foo_get_counter (ExFoo * foo);
