@@ -13,7 +13,7 @@ pub struct FooClass {
 }
 
 extern "C" {
-    pub fn ex_foo_new() -> *mut Foo;
+    pub fn ex_foo_new(name: *const c_char) -> *mut Foo;
     pub fn ex_foo_get_type() -> glib_ffi::GType;
 
     pub fn ex_foo_increment(this: *mut Foo, inc: i32) -> i32;
