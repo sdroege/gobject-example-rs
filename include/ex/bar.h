@@ -27,6 +27,9 @@ GType   ex_bar_get_type    (void);
 
 ExBar * ex_bar_new         (const gchar * name);
 
+gdouble ex_bar_get_number  (ExBar *bar);
+void    ex_bar_set_number  (ExBar *bar, gdouble num);
+
 G_END_DECLS
 
 #endif /* __EX_BAR_H__ */

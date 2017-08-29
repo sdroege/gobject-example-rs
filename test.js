@@ -14,3 +14,12 @@ print("bar name: " + bar.get_name());
 print("bar inc 1: " + bar.increment(1));
 print("bar inc 10: " + bar.increment(10));
 print("bar counter: " + bar.get_counter());
+
+print("bar number: " + bar.get_number());
+print("bar number (property): " + bar["number"]);
+bar.set_number(10.0)
+print("bar number: " + bar.get_number());
+print("bar number (property): " + bar["number"]);
+bar["number"] = 20.0;
+print("bar number: " + bar.get_number());
+print("bar number (property): " + bar["number"]);

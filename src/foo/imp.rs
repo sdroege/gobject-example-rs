@@ -116,8 +116,9 @@ impl Foo {
         let this = &*(obj as *mut Foo);
         let private = (*this).get_priv();
 
-        match id {
-            PropName => {
+        // FIXME: How to get rid of the transmute?
+        match mem::transmute::<u32, Properties>(id) {
+            Properties::PropName => {
                 // FIXME: Need impl FromGlibPtrBorrow for Value
                 let name = gobject_ffi::g_value_get_string(value);
                 Foo::set_name(
@@ -138,8 +139,8 @@ impl Foo {
     ) {
         let private = (*(obj as *mut Foo)).get_priv();
 
-        match id {
-            PropName => {
+        match mem::transmute::<u32, Properties>(id) {
+            Properties::PropName => {
                 let name = Foo::get_name(&from_glib_none(obj as *mut Foo), private);
                 // FIXME: Need impl FromGlibPtrBorrow for Value
                 gobject_ffi::g_value_set_string(value, name.to_glib_none().0);
