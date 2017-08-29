@@ -9,6 +9,7 @@ use std::ptr;
 use std::cell::RefCell;
 
 use glib;
+use glib::ToValue;
 use glib::translate::{from_glib_none, ToGlibPtr};
 
 use libc::c_char;
@@ -32,7 +33,12 @@ pub struct FooClass {
 
 #[repr(u32)]
 enum Properties {
-    PropName = 1,
+    Name = 1,
+}
+
+#[repr(u32)]
+enum Signals {
+    Incremented = 0,
 }
 
 // We could put our data into the Foo struct above but that's discouraged nowadays so let's just
@@ -51,10 +57,12 @@ struct FooPrivate {
 struct FooClassPrivate {
     parent_class: *const gobject_ffi::GObjectClass,
     properties: *const Vec<*const gobject_ffi::GParamSpec>,
+    signals: *const Vec<u32>,
 }
 static mut PRIV: FooClassPrivate = FooClassPrivate {
     parent_class: 0 as *const _,
     properties: 0 as *const _,
+    signals: 0 as *const _,
 };
 
 impl Foo {
@@ -118,7 +126,7 @@ impl Foo {
 
         // FIXME: How to get rid of the transmute?
         match mem::transmute::<u32, Properties>(id) {
-            Properties::PropName => {
+            Properties::Name => {
                 // FIXME: Need impl FromGlibPtrBorrow for Value
                 let name = gobject_ffi::g_value_get_string(value);
                 Foo::set_name(
@@ -140,7 +148,7 @@ impl Foo {
         let private = (*(obj as *mut Foo)).get_priv();
 
         match mem::transmute::<u32, Properties>(id) {
-            Properties::PropName => {
+            Properties::Name => {
                 let name = Foo::get_name(&from_glib_none(obj as *mut Foo), private);
                 // FIXME: Need impl FromGlibPtrBorrow for Value
                 gobject_ffi::g_value_set_string(value, name.to_glib_none().0);
@@ -158,10 +166,20 @@ impl Foo {
     //
     // Safe implementations. These take the wrapper type, and not &Self, as first argument
     //
-    fn increment(_this: &FooWrapper, private: &FooPrivate, inc: i32) -> i32 {
+    fn increment(this: &FooWrapper, private: &FooPrivate, inc: i32) -> i32 {
         let mut val = private.counter.borrow_mut();
 
         *val += inc;
+
+        unsafe {
+            let params = [this.to_value(), (*val).to_value(), inc.to_value()];
+            gobject_ffi::g_signal_emitv(
+                params.as_ptr() as *mut _,
+                (*PRIV.signals)[Signals::Incremented as usize],
+                0,
+                ptr::null_mut(),
+            );
+        }
 
         *val
     }
@@ -219,6 +237,25 @@ impl FooClass {
             let foo_klass = &mut *(klass as *mut FooClass);
             foo_klass.increment = Some(Foo::increment_trampoline);
         }
+
+        let mut signals = Vec::new();
+
+        let name_cstr = CString::new("incremented").unwrap();
+        let param_types = [gobject_ffi::G_TYPE_INT, gobject_ffi::G_TYPE_INT];
+        signals.push(gobject_ffi::g_signal_newv(
+            name_cstr.as_ptr(),
+            ex_foo_get_type(),
+            gobject_ffi::GSignalFlags::empty(),
+            ptr::null_mut(),
+            None,
+            ptr::null_mut(),
+            None,
+            gobject_ffi::G_TYPE_NONE,
+            param_types.len() as u32,
+            param_types.as_ptr() as *mut _,
+        ));
+
+        PRIV.signals = Box::into_raw(Box::new(signals));
 
         PRIV.parent_class =
             gobject_ffi::g_type_class_peek_parent(klass) as *const gobject_ffi::GObjectClass;

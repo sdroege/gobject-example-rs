@@ -12,12 +12,14 @@ use glib_ffi;
 use gobject_ffi;
 
 use glib;
-use glib::Value;
-use glib::IsA;
+use glib::{IsA, Value};
+use glib::object::Downcast;
+use glib::signal::connect;
 use glib::translate::*;
 
 use std::ptr;
 use std::mem;
+use std::mem::transmute;
 
 glib_wrapper! {
     pub struct Foo(Object<imp::Foo>);
@@ -39,6 +41,8 @@ pub trait FooExt {
     fn get_name(&self) -> Option<String>;
 
     fn get_property_name(&self) -> Option<String>;
+
+    fn connect_incremented<F: Fn(&Self, i32, i32) + 'static>(&self, f: F) -> u64;
 }
 
 impl<O: IsA<Foo> + IsA<glib::object::Object>> FooExt for O {
@@ -65,11 +69,37 @@ impl<O: IsA<Foo> + IsA<glib::object::Object>> FooExt for O {
         }
         value.get()
     }
+
+    fn connect_incremented<F: Fn(&Self, i32, i32) + 'static>(&self, f: F) -> u64 {
+        unsafe {
+            let f: Box<Box<Fn(&Self, i32, i32) + 'static>> = Box::new(Box::new(f));
+            connect(
+                self.to_glib_none().0,
+                "incremented",
+                transmute(incremented_trampoline::<Self> as usize),
+                Box::into_raw(f) as *mut _,
+            )
+        }
+    }
+}
+
+unsafe extern "C" fn incremented_trampoline<P>(
+    this: *mut imp::Foo,
+    val: i32,
+    inc: i32,
+    f: glib_ffi::gpointer,
+) where
+    P: IsA<Foo>,
+{
+    let f: &&(Fn(&Foo, i32, i32) + 'static) = transmute(f);
+    f(&Foo::from_glib_none(this).downcast_unchecked(), val, inc)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::cell::RefCell;
+    use std::rc::Rc;
 
     #[test]
     fn test_new() {
@@ -82,10 +112,18 @@ mod tests {
     fn test_counter() {
         let foo = Foo::new(Some("foo's name"));
 
+        let incremented = Rc::new(RefCell::new((0i32, 0i32)));
+        let incremented_clone = incremented.clone();
+        foo.connect_incremented(move |_, val, inc| {
+            *incremented_clone.borrow_mut() = (val, inc);
+        });
+
         assert_eq!(foo.get_counter(), 0);
         assert_eq!(foo.increment(1), 1);
+        assert_eq!(*incremented.borrow(), (1, 1));
         assert_eq!(foo.get_counter(), 1);
         assert_eq!(foo.increment(10), 11);
+        assert_eq!(*incremented.borrow(), (11, 10));
         assert_eq!(foo.get_counter(), 11);
     }
 

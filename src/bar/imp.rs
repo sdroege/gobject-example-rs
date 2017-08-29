@@ -32,7 +32,7 @@ pub struct BarClass {
 
 #[repr(u32)]
 enum Properties {
-    PropNumber = 1,
+    Number = 1,
 }
 
 // We could put our data into the Bar struct above but that's discouraged nowadays so let's just
@@ -117,7 +117,7 @@ impl Bar {
         let private = (*this).get_priv();
 
         match mem::transmute::<u32, Properties>(id) {
-            Properties::PropNumber => {
+            Properties::Number => {
                 // FIXME: Need impl FromGlibPtrBorrow for Value
                 let num = gobject_ffi::g_value_get_double(value);
                 Bar::set_number(&from_glib_none(obj as *mut Bar), private, num);
@@ -135,7 +135,7 @@ impl Bar {
         let private = (*(obj as *mut Bar)).get_priv();
 
         match mem::transmute::<u32, Properties>(id) {
-            Properties::PropNumber => {
+            Properties::Number => {
                 let num = Bar::get_number(&from_glib_none(obj as *mut Bar), private);
                 // FIXME: Need impl FromGlibPtrBorrow for Value
                 gobject_ffi::g_value_set_double(value, num);
@@ -170,7 +170,7 @@ impl Bar {
         unsafe {
             gobject_ffi::g_object_notify_by_pspec(
                 this.to_glib_none().0,
-                (*PRIV.properties)[1] as *mut _,
+                (*PRIV.properties)[Properties::Number as usize] as *mut _,
             );
         }
     }
