@@ -26,3 +26,9 @@ clean:
 	rm -f Ex-0.1.typelib
 	rm -f Ex-0.1.gir
 	cargo clean
+
+run-python: Ex-0.1.typelib
+	GI_TYPELIB_PATH=$(PWD) LD_LIBRARY_PATH=$(PWD)/target/debug python3 test.py
+
+run-gjs: Ex-0.1.typelib
+	GI_TYPELIB_PATH=$(PWD) LD_LIBRARY_PATH=$(PWD)/target/debug gjs test.js
