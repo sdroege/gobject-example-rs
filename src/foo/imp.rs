@@ -29,6 +29,7 @@ pub struct Foo {
 pub struct FooClass {
     pub parent_class: gobject_ffi::GObjectClass,
     pub increment: Option<unsafe extern "C" fn(*mut Foo, inc: i32) -> i32>,
+    pub incremented: Option<unsafe extern "C" fn(*mut Foo, val: i32, inc: i32)>,
 }
 
 #[repr(u32)]
@@ -167,6 +168,12 @@ impl Foo {
         Foo::increment(&from_glib_none(this), private, inc)
     }
 
+    unsafe extern "C" fn incremented_trampoline(this: *mut Foo, val: i32, inc: i32) {
+        let private = (*this).get_priv();
+
+        Foo::incremented(&from_glib_none(this), private, val, inc);
+    }
+
     //
     // Safe implementations. These take the wrapper type, and not &Self, as first argument
     //
@@ -188,6 +195,11 @@ impl Foo {
         }
 
         *val
+    }
+
+    fn incremented(_this: &FooWrapper, _private: &FooPrivate, _val: i32, _inc: i32) {
+        // Could do something here. Default/class handler of the "incremented"
+        // signal that could be overriden by subclasses
     }
 
     fn get_counter(_this: &FooWrapper, private: &FooPrivate) -> i32 {
@@ -242,17 +254,25 @@ impl FooClass {
         {
             let foo_klass = &mut *(klass as *mut FooClass);
             foo_klass.increment = Some(Foo::increment_trampoline);
+            foo_klass.incremented = Some(Foo::incremented_trampoline);
         }
 
         let mut signals = Vec::new();
 
         let name_cstr = CString::new("incremented").unwrap();
         let param_types = [gobject_ffi::G_TYPE_INT, gobject_ffi::G_TYPE_INT];
+
+        // FIXME: Is there a better way?
+        let class_offset = {
+            let dummy: FooClass = mem::uninitialized();
+            ((&dummy.incremented as *const _ as usize) - (&dummy as *const _ as usize)) as u32
+        };
+
         signals.push(gobject_ffi::g_signal_newv(
             name_cstr.as_ptr(),
             ex_foo_get_type(),
-            gobject_ffi::GSignalFlags::empty(),
-            ptr::null_mut(),
+            gobject_ffi::G_SIGNAL_RUN_LAST,
+            gobject_ffi::g_signal_type_cclosure_new(ex_foo_get_type(), class_offset),
             None,
             ptr::null_mut(),
             None,

@@ -21,6 +21,9 @@ struct _ExFoo {
 
 struct _ExFooClass {
   GObjectClass parent_class;
+
+  gint (*increment) (ExFoo * foo, gint inc);
+  void (*incremented) (ExFoo * foo, gint val, gint inc);
 };
 
 GType   ex_foo_get_type    (void);
