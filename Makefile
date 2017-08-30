@@ -3,12 +3,21 @@ HEADERS = \
 	include/ex/foo.h \
 	include/ex/bar.h
 
+RUST_SOURCES = \
+	src/lib.rs \
+	src/foo/ffi.rs \
+	src/foo/imp.rs \
+	src/foo/mod.rs \
+	src/bar/ffi.rs \
+	src/bar/imp.rs \
+	src/bar/mod.rs
+
 all: Ex-0.1.gir Ex-0.1.typelib
 
-target/debug/libgobject_example.so: src/lib.rs
+target/debug/libgobject_example.so: $(RUST_SOURCES)
 	cargo build
 
-Ex-0.1.gir: target/debug/libgobject_example.so
+Ex-0.1.gir: target/debug/libgobject_example.so $(HEADERS)
 	g-ir-scanner -v --warn-all \
 		--namespace Ex --nsversion=0.1 \
 		-Iinclude --c-include "ex/ex.h" \
@@ -32,3 +41,6 @@ run-python: Ex-0.1.typelib
 
 run-gjs: Ex-0.1.typelib
 	GI_TYPELIB_PATH=$(PWD) LD_LIBRARY_PATH=$(PWD)/target/debug gjs test.js
+
+check:
+	cargo test
