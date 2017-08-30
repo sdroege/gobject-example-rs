@@ -83,6 +83,9 @@ impl Bar {
             ex_bar_get_type(),
         ) as *mut Option<BarPrivate>;
 
+        // Here we initialize the private data. By default it is all zero-initialized
+        // but we don't really want to have any Drop impls run here so just overwrite the
+        // data
         ptr::write(
             private,
             Some(BarPrivate {
@@ -116,6 +119,7 @@ impl Bar {
         let this = &*(obj as *mut Bar);
         let private = (*this).get_priv();
 
+        // FIXME: How to get rid of the transmute?
         match mem::transmute::<u32, Properties>(id) {
             Properties::Number => {
                 // FIXME: Need impl FromGlibPtrBorrow for Value
@@ -134,6 +138,7 @@ impl Bar {
     ) {
         let private = (*(obj as *mut Bar)).get_priv();
 
+        // FIXME: How to get rid of the transmute?
         match mem::transmute::<u32, Properties>(id) {
             Properties::Number => {
                 let num = Bar::get_number(&from_glib_none(obj as *mut Bar), private);

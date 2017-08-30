@@ -92,6 +92,9 @@ impl Foo {
             ex_foo_get_type(),
         ) as *mut Option<FooPrivate>;
 
+        // Here we initialize the private data. By default it is all zero-initialized
+        // but we don't really want to have any Drop impls run here so just overwrite the
+        // data
         ptr::write(
             private,
             Some(FooPrivate {
@@ -147,6 +150,7 @@ impl Foo {
     ) {
         let private = (*(obj as *mut Foo)).get_priv();
 
+        // FIXME: How to get rid of the transmute?
         match mem::transmute::<u32, Properties>(id) {
             Properties::Name => {
                 let name = Foo::get_name(&from_glib_none(obj as *mut Foo), private);
@@ -171,6 +175,8 @@ impl Foo {
 
         *val += inc;
 
+        // FIXME: Need ObjectExt::emit() that takes a signal id, "emit_by_id()". Also
+        // needs GQuark bindings
         unsafe {
             let params = [this.to_value(), (*val).to_value(), inc.to_value()];
             gobject_ffi::g_signal_emitv(
