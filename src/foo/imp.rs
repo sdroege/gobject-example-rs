@@ -88,6 +88,8 @@ impl Foo {
 
     // Instance struct and private data initialization, called from GObject
     unsafe extern "C" fn init(obj: *mut gobject_ffi::GTypeInstance, _klass: glib_ffi::gpointer) {
+        callback_guard!();
+
         let private = gobject_ffi::g_type_instance_get_private(
             obj as *mut gobject_ffi::GTypeInstance,
             ex_foo_get_type(),
@@ -109,6 +111,8 @@ impl Foo {
     // Virtual method implementations / trampolines to safe implementations
     //
     unsafe extern "C" fn finalize(obj: *mut gobject_ffi::GObject) {
+        callback_guard!();
+
         // Free private data by replacing it with None
         let private = gobject_ffi::g_type_instance_get_private(
             obj as *mut gobject_ffi::GTypeInstance,
@@ -125,6 +129,8 @@ impl Foo {
         value: *mut gobject_ffi::GValue,
         _pspec: *mut gobject_ffi::GParamSpec,
     ) {
+        callback_guard!();
+
         let this = &*(obj as *mut Foo);
         let private = (*this).get_priv();
 
@@ -149,6 +155,8 @@ impl Foo {
         value: *mut gobject_ffi::GValue,
         _pspec: *mut gobject_ffi::GParamSpec,
     ) {
+        callback_guard!();
+
         let private = (*(obj as *mut Foo)).get_priv();
 
         // FIXME: How to get rid of the transmute?
@@ -163,12 +171,16 @@ impl Foo {
     }
 
     unsafe extern "C" fn increment_trampoline(this: *mut Foo, inc: i32) -> i32 {
+        callback_guard!();
+
         let private = (*this).get_priv();
 
         Foo::increment(&from_glib_none(this), private, inc)
     }
 
     unsafe extern "C" fn incremented_trampoline(this: *mut Foo, val: i32, inc: i32) {
+        callback_guard!();
+
         let private = (*this).get_priv();
 
         Foo::incremented(&from_glib_none(this), private, val, inc);
@@ -218,6 +230,8 @@ impl Foo {
 impl FooClass {
     // Class struct initialization, called from GObject
     unsafe extern "C" fn init(klass: glib_ffi::gpointer, _klass_data: glib_ffi::gpointer) {
+        callback_guard!();
+
         // This is an Option<_> so that we can replace its value with None on finalize() to
         // release all memory it holds
         gobject_ffi::g_type_class_add_private(klass, mem::size_of::<Option<FooPrivate>>() as usize);
@@ -295,6 +309,8 @@ impl FooClass {
 // Virtual method callers
 #[no_mangle]
 pub unsafe extern "C" fn ex_foo_increment(this: *mut Foo, inc: i32) -> i32 {
+    callback_guard!();
+
     let klass = (*this).get_class();
 
     (klass.increment.as_ref().unwrap())(this, inc)
@@ -303,6 +319,8 @@ pub unsafe extern "C" fn ex_foo_increment(this: *mut Foo, inc: i32) -> i32 {
 // Trampolines to safe Rust implementations
 #[no_mangle]
 pub unsafe extern "C" fn ex_foo_get_counter(this: *mut Foo) -> i32 {
+    callback_guard!();
+
     let private = (*this).get_priv();
 
     Foo::get_counter(&from_glib_none(this), private)
@@ -310,6 +328,8 @@ pub unsafe extern "C" fn ex_foo_get_counter(this: *mut Foo) -> i32 {
 
 #[no_mangle]
 pub unsafe extern "C" fn ex_foo_get_name(this: *mut Foo) -> *mut c_char {
+    callback_guard!();
+
     let private = (*this).get_priv();
 
     Foo::get_name(&from_glib_none(this), private).to_glib_full()
@@ -318,6 +338,8 @@ pub unsafe extern "C" fn ex_foo_get_name(this: *mut Foo) -> *mut c_char {
 // GObject glue
 #[no_mangle]
 pub unsafe extern "C" fn ex_foo_new(name: *const c_char) -> *mut Foo {
+    callback_guard!();
+
     // FIXME: need to prevent the string copies (property name and the value) here
     let prop_name_name = "name".to_glib_none();
     let prop_name_str: Option<String> = from_glib_none(name);
@@ -343,6 +365,8 @@ pub unsafe extern "C" fn ex_foo_new(name: *const c_char) -> *mut Foo {
 
 #[no_mangle]
 pub unsafe extern "C" fn ex_foo_get_type() -> glib_ffi::GType {
+    callback_guard!();
+
     static mut TYPE: glib_ffi::GType = gobject_ffi::G_TYPE_INVALID;
     static ONCE: Once = ONCE_INIT;
 

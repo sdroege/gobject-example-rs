@@ -82,6 +82,7 @@ unsafe extern "C" fn notify_number_trampoline(
     _param_spec: glib_ffi::gpointer,
     f: glib_ffi::gpointer,
 ) {
+    callback_guard!();
     let f: &&(Fn(&Bar) + 'static) = transmute(f);
     f(&from_glib_none(this))
 }

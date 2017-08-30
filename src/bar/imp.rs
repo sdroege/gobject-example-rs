@@ -78,6 +78,8 @@ impl Bar {
 
     // Instance struct and private data initialization, called from GObject
     unsafe extern "C" fn init(obj: *mut gobject_ffi::GTypeInstance, _klass: glib_ffi::gpointer) {
+        callback_guard!();
+
         let private = gobject_ffi::g_type_instance_get_private(
             obj as *mut gobject_ffi::GTypeInstance,
             ex_bar_get_type(),
@@ -98,6 +100,8 @@ impl Bar {
     // Virtual method implementations / trampolines to safe implementations
     //
     unsafe extern "C" fn finalize(obj: *mut gobject_ffi::GObject) {
+        callback_guard!();
+
         // Free private data by replacing it with None
         let private = gobject_ffi::g_type_instance_get_private(
             obj as *mut gobject_ffi::GTypeInstance,
@@ -116,6 +120,8 @@ impl Bar {
         value: *mut gobject_ffi::GValue,
         _pspec: *mut gobject_ffi::GParamSpec,
     ) {
+        callback_guard!();
+
         let this = &*(obj as *mut Bar);
         let private = (*this).get_priv();
 
@@ -136,6 +142,8 @@ impl Bar {
         value: *mut gobject_ffi::GValue,
         _pspec: *mut gobject_ffi::GParamSpec,
     ) {
+        callback_guard!();
+
         let private = (*(obj as *mut Bar)).get_priv();
 
         // FIXME: How to get rid of the transmute?
@@ -150,6 +158,8 @@ impl Bar {
     }
 
     unsafe extern "C" fn increment_trampoline(this: *mut foo::imp::Foo, inc: i32) -> i32 {
+        callback_guard!();
+
         let this = this as *mut Bar;
         let private = (*this).get_priv();
 
@@ -188,6 +198,8 @@ impl Bar {
 impl BarClass {
     // Class struct initialization, called from GObject
     unsafe extern "C" fn init(klass: glib_ffi::gpointer, _klass_data: glib_ffi::gpointer) {
+        callback_guard!();
+
         // This is an Option<_> so that we can replace its value with None on finalize() to
         // release all memory it holds
         gobject_ffi::g_type_class_add_private(klass, mem::size_of::<Option<BarPrivate>>() as usize);
@@ -240,6 +252,8 @@ impl BarClass {
 // Trampolines to safe Rust implementations
 #[no_mangle]
 pub unsafe extern "C" fn ex_bar_get_number(this: *mut Bar) -> f64 {
+    callback_guard!();
+
     let private = (*this).get_priv();
 
     Bar::get_number(&from_glib_none(this), private)
@@ -247,6 +261,8 @@ pub unsafe extern "C" fn ex_bar_get_number(this: *mut Bar) -> f64 {
 
 #[no_mangle]
 pub unsafe extern "C" fn ex_bar_set_number(this: *mut Bar, num: f64) {
+    callback_guard!();
+
     let private = (*this).get_priv();
 
     Bar::set_number(&from_glib_none(this), private, num);
@@ -255,6 +271,8 @@ pub unsafe extern "C" fn ex_bar_set_number(this: *mut Bar, num: f64) {
 // GObject glue
 #[no_mangle]
 pub unsafe extern "C" fn ex_bar_new(name: *const c_char) -> *mut Bar {
+    callback_guard!();
+
     // FIXME: need to prevent the string copies (property name and the value) here
     let prop_name_name = "name".to_glib_none();
     let prop_name_str: Option<String> = from_glib_none(name);
@@ -280,6 +298,8 @@ pub unsafe extern "C" fn ex_bar_new(name: *const c_char) -> *mut Bar {
 
 #[no_mangle]
 pub unsafe extern "C" fn ex_bar_get_type() -> glib_ffi::GType {
+    callback_guard!();
+
     static mut TYPE: glib_ffi::GType = gobject_ffi::G_TYPE_INVALID;
     static ONCE: Once = ONCE_INIT;
 
