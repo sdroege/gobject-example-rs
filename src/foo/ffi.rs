@@ -4,12 +4,14 @@ use libc::c_char;
 
 #[repr(C)]
 pub struct Foo {
-    parent: gobject_ffi::GObject,
+    pub parent: gobject_ffi::GObject,
 }
 
 #[repr(C)]
 pub struct FooClass {
-    parent_class: gobject_ffi::GObjectClass,
+    pub parent_class: gobject_ffi::GObjectClass,
+    pub increment: Option<unsafe extern "C" fn(*mut Foo, inc: i32) -> i32>,
+    pub incremented: Option<unsafe extern "C" fn(*mut Foo, val: i32, inc: i32)>,
 }
 
 extern "C" {

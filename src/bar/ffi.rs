@@ -5,12 +5,12 @@ use libc::c_char;
 
 #[repr(C)]
 pub struct Bar {
-    parent: foo::imp::Foo,
+    pub parent: foo::imp::Foo,
 }
 
 #[repr(C)]
 pub struct BarClass {
-    parent_class: foo::imp::FooClass,
+    pub parent_class: foo::imp::FooClass,
 }
 
 extern "C" {
