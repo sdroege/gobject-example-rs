@@ -2,7 +2,8 @@ HEADERS = \
 	include/ex/ex.h \
 	include/ex/foo.h \
 	include/ex/bar.h \
-	include/ex/nameable.h
+	include/ex/nameable.h \
+	include/ex/rstring.h
 
 RUST_SOURCES = \
 	src/lib.rs \
@@ -14,7 +15,10 @@ RUST_SOURCES = \
 	src/bar/mod.rs \
 	src/nameable/ffi.rs \
 	src/nameable/imp.rs \
-	src/nameable/mod.rs
+	src/nameable/mod.rs \
+	src/rstring/ffi.rs \
+	src/rstring/imp.rs \
+	src/rstring/mod.rs
 
 all: Ex-0.1.gir Ex-0.1.typelib
 

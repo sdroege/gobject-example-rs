@@ -4,5 +4,6 @@
 #include "foo.h"
 #include "bar.h"
 #include "nameable.h"
+#include "rstring.h"
 
 #endif /* __EX_H__ */

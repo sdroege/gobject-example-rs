@@ -31,3 +31,9 @@ print("bar number (property): " + bar["number"]);
 bar["number"] = 20.0;
 print("bar number: " + bar.get_number());
 print("bar number (property): " + bar["number"]);
+
+let s = new Ex.RString("something");
+print("rstring: " + s.get());
+let s2 = s.copy();
+s2.set("something else");
+print("rstring2: " + s2.get());
