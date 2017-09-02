@@ -225,6 +225,17 @@ impl Foo {
     fn set_name(_this: &FooWrapper, private: &FooPrivate, name: Option<String>) {
         *private.name.borrow_mut() = name;
     }
+
+    unsafe extern "C" fn nameable_get_name_trampoline(
+        this: *mut ::nameable::imp::Nameable,
+    ) -> *mut c_char {
+        callback_guard!();
+
+        let this = this as *mut Foo;
+        let private = (*this).get_priv();
+
+        Foo::get_name(&from_glib_none(this), private).to_glib_full()
+    }
 }
 
 impl FooClass {
@@ -299,6 +310,14 @@ impl FooClass {
 
         PRIV.parent_class =
             gobject_ffi::g_type_class_peek_parent(klass) as *const gobject_ffi::GObjectClass;
+    }
+
+    unsafe extern "C" fn init_nameable_interface(
+        iface: glib_ffi::gpointer,
+        _iface_data: glib_ffi::gpointer,
+    ) {
+        let iface = &mut *(iface as *mut ::nameable::imp::NameableInterface);
+        iface.get_name = Some(Foo::nameable_get_name_trampoline);
     }
 }
 
@@ -391,6 +410,18 @@ pub unsafe extern "C" fn ex_foo_get_type() -> glib_ffi::GType {
             type_name.as_ptr(),
             &type_info,
             gobject_ffi::GTypeFlags::empty(),
+        );
+
+        // Implement Nameable interface here
+        let nameable_info = gobject_ffi::GInterfaceInfo {
+            interface_init: Some(FooClass::init_nameable_interface),
+            interface_finalize: None,
+            interface_data: ptr::null_mut(),
+        };
+        gobject_ffi::g_type_add_interface_static(
+            TYPE,
+            ::nameable::imp::ex_nameable_get_type(),
+            &nameable_info,
         );
     });
 

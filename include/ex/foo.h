@@ -6,11 +6,11 @@
 G_BEGIN_DECLS
 
 #define EX_TYPE_FOO            (ex_foo_get_type())
-#define EX_FOO(obj)            (G_TYPE_CHECK_INSTANCE_CAST((obj),EX_TYPE_FOO,GstExFoo))
+#define EX_FOO(obj)            (G_TYPE_CHECK_INSTANCE_CAST((obj),EX_TYPE_FOO,ExFoo))
 #define EX_IS_FOO(obj)         (G_TYPE_CHECK_INSTANCE_TYPE((obj),EX_TYPE_FOO))
-#define EX_FOO_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST((klass) ,EX_TYPE_FOO,GstExFooClass))
+#define EX_FOO_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST((klass) ,EX_TYPE_FOO,ExFooClass))
 #define EX_IS_FOO_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE((klass) ,EX_TYPE_FOO))
-#define EX_FOO_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS((obj) ,EX_TYPE_FOO,GstExFooClass))
+#define EX_FOO_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS((obj) ,EX_TYPE_FOO,ExFooClass))
 
 typedef struct _ExFoo      ExFoo;
 typedef struct _ExFooClass ExFooClass;

@@ -14,3 +14,4 @@ macro_rules! callback_guard {
 
 pub mod foo;
 pub mod bar;
+pub mod nameable;

@@ -6,11 +6,11 @@
 G_BEGIN_DECLS
 
 #define EX_TYPE_BAR            (ex_bar_get_type())
-#define EX_BAR(obj)            (G_TYPE_CHECK_INSTANCE_CAST((obj),EX_TYPE_BAR,GstExBar))
+#define EX_BAR(obj)            (G_TYPE_CHECK_INSTANCE_CAST((obj),EX_TYPE_BAR,ExBar))
 #define EX_IS_BAR(obj)         (G_TYPE_CHECK_INSTANCE_TYPE((obj),EX_TYPE_BAR))
-#define EX_BAR_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST((klass) ,EX_TYPE_BAR,GstExBarClass))
+#define EX_BAR_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST((klass) ,EX_TYPE_BAR,ExBarClass))
 #define EX_IS_BAR_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE((klass) ,EX_TYPE_BAR))
-#define EX_BAR_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS((obj) ,EX_TYPE_BAR,GstExBarClass))
+#define EX_BAR_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS((obj) ,EX_TYPE_BAR,ExBarClass))
 
 typedef struct _ExBar      ExBar;
 typedef struct _ExBarClass ExBarClass;

@@ -12,6 +12,7 @@ use glib_ffi;
 use gobject_ffi;
 
 use foo;
+use nameable;
 
 use glib::Value;
 use glib::signal::connect;
@@ -22,7 +23,7 @@ use std::mem;
 use std::mem::transmute;
 
 glib_wrapper! {
-    pub struct Bar(Object<imp::Bar>): foo::Foo;
+    pub struct Bar(Object<imp::Bar>): foo::Foo, nameable::Nameable;
 
     match fn {
         get_type => || imp::ex_bar_get_type(),

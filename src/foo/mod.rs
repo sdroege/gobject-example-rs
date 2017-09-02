@@ -21,8 +21,10 @@ use std::ptr;
 use std::mem;
 use std::mem::transmute;
 
+use nameable;
+
 glib_wrapper! {
-    pub struct Foo(Object<imp::Foo>);
+    pub struct Foo(Object<imp::Foo>): nameable::Nameable;
 
     match fn {
         get_type => || imp::ex_foo_get_type(),

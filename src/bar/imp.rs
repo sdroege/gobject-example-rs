@@ -169,7 +169,7 @@ impl Bar {
     //
     // Safe implementations. These take the wrapper type, and not &Self, as first argument
     //
-    fn increment(this: &BarWrapper, private: &BarPrivate, inc: i32) -> i32 {
+    fn increment(this: &BarWrapper, _private: &BarPrivate, inc: i32) -> i32 {
         // We could do our own stuff here but instead we just chain
         // up with twice the inc
         //
