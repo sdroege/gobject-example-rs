@@ -37,3 +37,8 @@ print("rstring: " + str(s.get()))
 s2 = s.copy()
 s2.set("something else")
 print("rstring 2: " + str(s2.get()))
+
+s = Ex.SharedRString.new("something")
+print("shared rstring: " + str(s.get()))
+s2 = s.ref()
+print("shared rstring 2: " + str(s2.get()))

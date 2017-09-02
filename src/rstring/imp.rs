@@ -20,7 +20,7 @@ impl RString {
     }
 
     fn get(&self) -> Option<String> {
-        self.0.as_ref().map(|s| s.clone())
+        self.0.clone()
     }
 
     fn set(&mut self, s: Option<String>) {

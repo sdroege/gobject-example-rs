@@ -37,3 +37,10 @@ print("rstring: " + s.get());
 let s2 = s.copy();
 s2.set("something else");
 print("rstring2: " + s2.get());
+
+let s = new Ex.SharedRString("something");
+print("shared rstring: " + s.get());
+let s2 = s.ref();
+print("shared rstring2: " + s2.get());
+
+
