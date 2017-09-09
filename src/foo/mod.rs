@@ -95,7 +95,7 @@ unsafe extern "C" fn incremented_trampoline<P>(
 {
     callback_guard!();
     let f: &&(Fn(&Foo, i32, i32) + 'static) = transmute(f);
-    f(&Foo::from_glib_none(this).downcast_unchecked(), val, inc)
+    f(&Foo::from_glib_borrow(this).downcast_unchecked(), val, inc)
 }
 
 #[cfg(test)]

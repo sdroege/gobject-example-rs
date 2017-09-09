@@ -6,7 +6,7 @@ use std::sync::{Once, ONCE_INIT};
 use std::mem;
 use std::ptr;
 
-use glib::translate::{from_glib_none, ToGlibPtr};
+use glib::translate::{from_glib_borrow, ToGlibPtr};
 
 use libc::{c_char, c_void};
 
@@ -47,7 +47,7 @@ impl Nameable {
     unsafe extern "C" fn get_name_default_trampoline(this: *mut Nameable) -> *mut c_char {
         callback_guard!();
 
-        Nameable::get_name_default(&from_glib_none(this)).to_glib_full()
+        Nameable::get_name_default(&from_glib_borrow(this)).to_glib_full()
     }
 
     //

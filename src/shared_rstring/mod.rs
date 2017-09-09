@@ -46,7 +46,8 @@ mod tests {
         let s = SharedRString::new(Some("bla"));
         assert_eq!(s.get(), Some("bla".into()));
 
-        let mut s2 = s.clone();
+        let s2 = s.clone();
         assert_eq!(s.get(), Some("bla".into()));
+        assert_eq!(s2.get(), Some("bla".into()));
     }
 }

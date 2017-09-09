@@ -9,7 +9,7 @@ use std::ptr;
 use std::cell::RefCell;
 
 use glib;
-use glib::translate::{from_glib_none, ToGlibPtr};
+use glib::translate::{from_glib_none, from_glib_borrow, ToGlibPtr};
 
 use libc::c_char;
 
@@ -130,7 +130,7 @@ impl Bar {
             Properties::Number => {
                 // FIXME: Need impl FromGlibPtrBorrow for Value
                 let num = gobject_ffi::g_value_get_double(value);
-                Bar::set_number(&from_glib_none(obj as *mut Bar), private, num);
+                Bar::set_number(&from_glib_borrow(obj as *mut Bar), private, num);
             }
             _ => unreachable!(),
         }
@@ -149,7 +149,7 @@ impl Bar {
         // FIXME: How to get rid of the transmute?
         match mem::transmute::<u32, Properties>(id) {
             Properties::Number => {
-                let num = Bar::get_number(&from_glib_none(obj as *mut Bar), private);
+                let num = Bar::get_number(&from_glib_borrow(obj as *mut Bar), private);
                 // FIXME: Need impl FromGlibPtrBorrow for Value
                 gobject_ffi::g_value_set_double(value, num);
             }
@@ -163,7 +163,7 @@ impl Bar {
         let this = this as *mut Bar;
         let private = (*this).get_priv();
 
-        Bar::increment(&from_glib_none(this), private, inc)
+        Bar::increment(&from_glib_borrow(this), private, inc)
     }
 
     //
@@ -256,7 +256,7 @@ pub unsafe extern "C" fn ex_bar_get_number(this: *mut Bar) -> f64 {
 
     let private = (*this).get_priv();
 
-    Bar::get_number(&from_glib_none(this), private)
+    Bar::get_number(&from_glib_borrow(this), private)
 }
 
 #[no_mangle]
@@ -265,7 +265,7 @@ pub unsafe extern "C" fn ex_bar_set_number(this: *mut Bar, num: f64) {
 
     let private = (*this).get_priv();
 
-    Bar::set_number(&from_glib_none(this), private, num);
+    Bar::set_number(&from_glib_borrow(this), private, num);
 }
 
 // GObject glue

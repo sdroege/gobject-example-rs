@@ -10,7 +10,7 @@ use std::cell::RefCell;
 
 use glib;
 use glib::ToValue;
-use glib::translate::{from_glib_none, ToGlibPtr};
+use glib::translate::{from_glib_none, from_glib_borrow, ToGlibPtr};
 
 use libc::c_char;
 
@@ -140,7 +140,7 @@ impl Foo {
                 // FIXME: Need impl FromGlibPtrBorrow for Value
                 let name = gobject_ffi::g_value_get_string(value);
                 Foo::set_name(
-                    &from_glib_none(obj as *mut Foo),
+                    &from_glib_borrow(obj as *mut Foo),
                     private,
                     from_glib_none(name),
                 );
@@ -162,7 +162,7 @@ impl Foo {
         // FIXME: How to get rid of the transmute?
         match mem::transmute::<u32, Properties>(id) {
             Properties::Name => {
-                let name = Foo::get_name(&from_glib_none(obj as *mut Foo), private);
+                let name = Foo::get_name(&from_glib_borrow(obj as *mut Foo), private);
                 // FIXME: Need impl FromGlibPtrBorrow for Value
                 gobject_ffi::g_value_set_string(value, name.to_glib_none().0);
             }
@@ -175,7 +175,7 @@ impl Foo {
 
         let private = (*this).get_priv();
 
-        Foo::increment(&from_glib_none(this), private, inc)
+        Foo::increment(&from_glib_borrow(this), private, inc)
     }
 
     unsafe extern "C" fn incremented_trampoline(this: *mut Foo, val: i32, inc: i32) {
@@ -183,7 +183,7 @@ impl Foo {
 
         let private = (*this).get_priv();
 
-        Foo::incremented(&from_glib_none(this), private, val, inc);
+        Foo::incremented(&from_glib_borrow(this), private, val, inc);
     }
 
     //
@@ -234,7 +234,7 @@ impl Foo {
         let this = this as *mut Foo;
         let private = (*this).get_priv();
 
-        Foo::get_name(&from_glib_none(this), private).to_glib_full()
+        Foo::get_name(&from_glib_borrow(this), private).to_glib_full()
     }
 }
 
@@ -342,7 +342,7 @@ pub unsafe extern "C" fn ex_foo_get_counter(this: *mut Foo) -> i32 {
 
     let private = (*this).get_priv();
 
-    Foo::get_counter(&from_glib_none(this), private)
+    Foo::get_counter(&from_glib_borrow(this), private)
 }
 
 #[no_mangle]
@@ -351,7 +351,7 @@ pub unsafe extern "C" fn ex_foo_get_name(this: *mut Foo) -> *mut c_char {
 
     let private = (*this).get_priv();
 
-    Foo::get_name(&from_glib_none(this), private).to_glib_full()
+    Foo::get_name(&from_glib_borrow(this), private).to_glib_full()
 }
 
 // GObject glue

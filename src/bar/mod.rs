@@ -85,7 +85,7 @@ unsafe extern "C" fn notify_number_trampoline(
 ) {
     callback_guard!();
     let f: &&(Fn(&Bar) + 'static) = transmute(f);
-    f(&from_glib_none(this))
+    f(&from_glib_borrow(this))
 }
 
 #[cfg(test)]
