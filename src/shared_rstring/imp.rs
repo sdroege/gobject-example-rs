@@ -81,7 +81,7 @@ pub unsafe extern "C" fn ex_shared_rstring_get_type() -> glib_ffi::GType {
         TYPE = gobject_ffi::g_boxed_type_register_static(
             type_name.as_ptr(),
             Some(mem::transmute(ex_shared_rstring_ref as *const c_void)),
-            Some(mem::transmute(ex_shared_rstring_ref as *const c_void)),
+            Some(mem::transmute(ex_shared_rstring_unref as *const c_void)),
         );
 
     });
