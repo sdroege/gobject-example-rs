@@ -14,7 +14,7 @@ use gobject_ffi;
 use glib;
 use glib::{IsA, Value};
 use glib::object::Downcast;
-use glib::signal::connect;
+use glib::signal::{connect, SignalHandlerId};
 use glib::translate::*;
 
 use std::ptr;
@@ -44,7 +44,7 @@ pub trait FooExt {
 
     fn get_property_name(&self) -> Option<String>;
 
-    fn connect_incremented<F: Fn(&Self, i32, i32) + 'static>(&self, f: F) -> u64;
+    fn connect_incremented<F: Fn(&Self, i32, i32) + 'static>(&self, f: F) -> SignalHandlerId;
 }
 
 impl<O: IsA<Foo> + IsA<glib::object::Object>> FooExt for O {
@@ -72,7 +72,7 @@ impl<O: IsA<Foo> + IsA<glib::object::Object>> FooExt for O {
         value.get()
     }
 
-    fn connect_incremented<F: Fn(&Self, i32, i32) + 'static>(&self, f: F) -> u64 {
+    fn connect_incremented<F: Fn(&Self, i32, i32) + 'static>(&self, f: F) -> SignalHandlerId {
         unsafe {
             let f: Box<Box<Fn(&Self, i32, i32) + 'static>> = Box::new(Box::new(f));
             connect(

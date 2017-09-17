@@ -15,7 +15,7 @@ use foo;
 use nameable;
 
 use glib::Value;
-use glib::signal::connect;
+use glib::signal::{connect, SignalHandlerId};
 use glib::translate::*;
 
 use std::ptr;
@@ -65,7 +65,7 @@ impl Bar {
         }
     }
 
-    pub fn connect_property_number_notify<F: Fn(&Self) + 'static>(&self, f: F) -> u64 {
+    pub fn connect_property_number_notify<F: Fn(&Self) + 'static>(&self, f: F) -> SignalHandlerId {
         unsafe {
             let f: Box<Box<Fn(&Self) + 'static>> = Box::new(Box::new(f));
             connect(
