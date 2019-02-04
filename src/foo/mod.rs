@@ -12,19 +12,17 @@ use glib_ffi;
 use gobject_ffi;
 
 use glib;
-use glib::{IsA, Value};
-use glib::object::Downcast;
-use glib::signal::{connect, SignalHandlerId};
+use glib::prelude::*;
+use glib::signal::{connect_raw, SignalHandlerId};
+use glib::subclass::prelude::*;
 use glib::translate::*;
 
-use std::ptr;
 use std::mem;
-use std::mem::transmute;
 
 use nameable;
 
 glib_wrapper! {
-    pub struct Foo(Object<imp::Foo>): nameable::Nameable;
+    pub struct Foo(Object<imp::Foo, imp::FooClass, FooClass>) @implements nameable::Nameable;
 
     match fn {
         get_type => || imp::ex_foo_get_type(),
@@ -47,25 +45,25 @@ pub trait FooExt {
     fn connect_incremented<F: Fn(&Self, i32, i32) + 'static>(&self, f: F) -> SignalHandlerId;
 }
 
-impl<O: IsA<Foo> + IsA<glib::object::Object>> FooExt for O {
+impl<O: IsA<Foo>> FooExt for O {
     fn increment(&self, inc: i32) -> i32 {
-        unsafe { imp::ex_foo_increment(self.to_glib_none().0, inc) }
+        unsafe { imp::ex_foo_increment(self.as_ref().to_glib_none().0, inc) }
     }
 
     fn get_counter(&self) -> i32 {
-        unsafe { imp::ex_foo_get_counter(self.to_glib_none().0) }
+        unsafe { imp::ex_foo_get_counter(self.as_ref().to_glib_none().0) }
     }
 
     fn get_name(&self) -> Option<String> {
-        unsafe { from_glib_full(imp::ex_foo_get_name(self.to_glib_none().0)) }
+        unsafe { from_glib_full(imp::ex_foo_get_name(self.as_ref().to_glib_none().0)) }
     }
 
     fn get_property_name(&self) -> Option<String> {
-        let mut value = Value::from(None::<&str>);
+        let mut value = glib::Value::from(None::<&str>);
         unsafe {
             gobject_ffi::g_object_get_property(
-                self.to_glib_none().0,
-                "name".to_glib_none().0,
+                self.as_ptr() as *mut gobject_ffi::GObject,
+                b"name\0".as_ptr() as *const _,
                 value.to_glib_none_mut().0,
             );
         }
@@ -74,18 +72,20 @@ impl<O: IsA<Foo> + IsA<glib::object::Object>> FooExt for O {
 
     fn connect_incremented<F: Fn(&Self, i32, i32) + 'static>(&self, f: F) -> SignalHandlerId {
         unsafe {
-            let f: Box<Box<Fn(&Self, i32, i32) + 'static>> = Box::new(Box::new(f));
-            connect(
-                self.to_glib_none().0,
-                "incremented",
-                transmute(incremented_trampoline::<Self> as usize),
-                Box::into_raw(f) as *mut _,
+            let f: Box<F> = Box::new(f);
+            connect_raw(
+                self.as_ptr() as *mut gobject_ffi::GObject,
+                b"incremented\0".as_ptr() as *const _,
+                Some(mem::transmute(
+                    connect_incremented_trampoline::<Self, F> as usize,
+                )),
+                Box::into_raw(f),
             )
         }
     }
 }
 
-unsafe extern "C" fn incremented_trampoline<P>(
+unsafe extern "C" fn connect_incremented_trampoline<P, F: Fn(&P, i32, i32) + 'static>(
     this: *mut imp::Foo,
     val: i32,
     inc: i32,
@@ -93,9 +93,73 @@ unsafe extern "C" fn incremented_trampoline<P>(
 ) where
     P: IsA<Foo>,
 {
-    callback_guard!();
-    let f: &&(Fn(&Foo, i32, i32) + 'static) = transmute(f);
-    f(&Foo::from_glib_borrow(this).downcast_unchecked(), val, inc)
+    let f: &F = &*(f as *const F);
+    f(&Foo::from_glib_borrow(this).unsafe_cast(), val, inc)
+}
+
+pub trait FooImpl: ObjectImpl + 'static {
+    fn increment(&self, obj: &Foo, inc: i32) -> i32 {
+        self.parent_increment(obj, inc)
+    }
+
+    fn incremented(&self, obj: &Foo, val: i32, inc: i32) {
+        self.parent_incremented(obj, val, inc);
+    }
+
+    fn parent_increment(&self, obj: &Foo, inc: i32) -> i32 {
+        unsafe {
+            let data = self.get_type_data();
+            let parent_class = data.as_ref().get_parent_class() as *mut imp::FooClass;
+            if let Some(ref f) = (*parent_class).increment {
+                f(obj.to_glib_none().0, inc)
+            } else {
+                unimplemented!()
+            }
+        }
+    }
+
+    fn parent_incremented(&self, obj: &Foo, val: i32, inc: i32) {
+        unsafe {
+            let data = self.get_type_data();
+            let parent_class = data.as_ref().get_parent_class() as *mut imp::FooClass;
+            if let Some(ref f) = (*parent_class).incremented {
+                f(obj.to_glib_none().0, val, inc)
+            }
+        }
+    }
+}
+
+unsafe impl<T: ObjectSubclass + FooImpl> IsSubclassable<T> for FooClass {
+    fn override_vfuncs(&mut self) {
+        <glib::ObjectClass as IsSubclassable<T>>::override_vfuncs(self);
+        unsafe {
+            let klass = &mut *(self as *mut Self as *mut imp::FooClass);
+            klass.increment = Some(increment_trampoline::<T>);
+            klass.incremented = Some(incremented_trampoline::<T>);
+        }
+    }
+}
+
+// Virtual method default implementation trampolines
+unsafe extern "C" fn increment_trampoline<T: ObjectSubclass>(this: *mut imp::Foo, inc: i32) -> i32
+where
+    T: FooImpl,
+{
+    let instance = &*(this as *const T::Instance);
+    let imp = instance.get_impl();
+    imp.increment(&from_glib_borrow(this), inc)
+}
+
+unsafe extern "C" fn incremented_trampoline<T: ObjectSubclass>(
+    this: *mut imp::Foo,
+    val: i32,
+    inc: i32,
+) where
+    T: FooImpl,
+{
+    let instance = &*(this as *const T::Instance);
+    let imp = instance.get_impl();
+    imp.incremented(&from_glib_borrow(this), val, inc);
 }
 
 #[cfg(test)]

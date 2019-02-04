@@ -1,6 +1,6 @@
+use foo;
 use glib_ffi;
 use gobject_ffi;
-use foo;
 use libc::c_char;
 
 #[repr(C)]

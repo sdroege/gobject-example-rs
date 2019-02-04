@@ -8,18 +8,12 @@ pub mod imp {
     pub use nameable::ffi::*;
 }
 
-use glib_ffi;
-use gobject_ffi;
-
-use glib;
-use glib::IsA;
+use glib::subclass::prelude::*;
 use glib::translate::*;
-
-use std::ptr;
-use std::mem;
+use glib::IsA;
 
 glib_wrapper! {
-    pub struct Nameable(Object<imp::Nameable>);
+    pub struct Nameable(Interface<imp::Nameable>);
 
     match fn {
         get_type => || imp::ex_nameable_get_type(),
@@ -30,17 +24,43 @@ pub trait NameableExt {
     fn get_name(&self) -> Option<String>;
 }
 
-impl<O: IsA<Nameable> + IsA<glib::object::Object>> NameableExt for O {
+impl<O: IsA<Nameable>> NameableExt for O {
     fn get_name(&self) -> Option<String> {
-        unsafe { from_glib_full(imp::ex_nameable_get_name(self.to_glib_none().0)) }
+        unsafe { from_glib_full(imp::ex_nameable_get_name(self.as_ref().to_glib_none().0)) }
     }
+}
+
+pub trait NameableImpl: ObjectImpl + 'static {
+    fn get_name(&self, nameable: &Nameable) -> Option<String>;
+}
+
+unsafe impl<T: ObjectSubclass + NameableImpl> IsImplementable<T> for Nameable {
+    unsafe extern "C" fn interface_init(
+        iface: glib_ffi::gpointer,
+        _iface_data: glib_ffi::gpointer,
+    ) {
+        let iface = &mut *(iface as *mut imp::NameableInterface);
+        iface.get_name = Some(get_name_trampoline::<T>);
+    }
+}
+
+unsafe extern "C" fn get_name_trampoline<T: ObjectSubclass>(
+    nameable: *mut imp::Nameable,
+) -> *mut libc::c_char
+where
+    T: NameableImpl,
+{
+    let instance = &*(nameable as *mut T::Instance);
+    let imp = instance.get_impl();
+
+    imp.get_name(&from_glib_borrow(nameable)).to_glib_full()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use glib::Cast;
     use foo::Foo;
+    use glib::Cast;
 
     #[test]
     fn test_name() {

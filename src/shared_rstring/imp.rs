@@ -1,18 +1,29 @@
 use glib_ffi;
-use gobject_ffi;
 
-use std::ffi::CString;
-use std::sync::{Once, ONCE_INIT};
-use std::mem;
 use std::sync::Arc;
 
-use glib::translate::{from_glib_none, ToGlibPtr};
+use glib::subclass::prelude::*;
+use glib::translate::{from_glib_none, ToGlib, ToGlibPtr};
 
-use libc::{c_char, c_void};
+use libc::c_char;
 
 // No #[repr(C)] here as we export it as an opaque struct
 // If it was not opaque, it must be #[repr(C)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct SharedRString(Option<String>);
+
+impl BoxedType for SharedRString {
+    // This type name must be unique per process.
+    const NAME: &'static str = "ExSharedRString";
+
+    // This macro defines a
+    //   fn get_type() -> glib::Type
+    // function
+    glib_boxed_type!();
+}
+
+// This macro derives some traits on the struct
+glib_boxed_derive_traits!(SharedRString);
 
 impl SharedRString {
     fn new(s: Option<String>) -> Arc<SharedRString> {
@@ -30,8 +41,6 @@ impl SharedRString {
 //
 #[no_mangle]
 pub unsafe extern "C" fn ex_shared_rstring_new(s: *const c_char) -> *mut SharedRString {
-    callback_guard!();
-
     let s = SharedRString::new(from_glib_none(s));
     Arc::into_raw(s) as *mut _
 }
@@ -40,8 +49,6 @@ pub unsafe extern "C" fn ex_shared_rstring_new(s: *const c_char) -> *mut SharedR
 pub unsafe extern "C" fn ex_shared_rstring_ref(
     shared_rstring: *mut SharedRString,
 ) -> *mut SharedRString {
-    callback_guard!();
-
     let shared_rstring = Arc::from_raw(shared_rstring);
     let s = shared_rstring.clone();
 
@@ -53,15 +60,11 @@ pub unsafe extern "C" fn ex_shared_rstring_ref(
 
 #[no_mangle]
 pub unsafe extern "C" fn ex_shared_rstring_unref(shared_rstring: *mut SharedRString) {
-    callback_guard!();
-
     let _ = Arc::from_raw(shared_rstring);
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn ex_shared_rstring_get(shared_rstring: *mut SharedRString) -> *mut c_char {
-    callback_guard!();
-
     let shared_rstring = &*shared_rstring;
     // FIXME: This could borrow the &str in theory!
     shared_rstring.get().to_glib_full()
@@ -70,21 +73,5 @@ pub unsafe extern "C" fn ex_shared_rstring_get(shared_rstring: *mut SharedRStrin
 // GObject glue
 #[no_mangle]
 pub unsafe extern "C" fn ex_shared_rstring_get_type() -> glib_ffi::GType {
-    callback_guard!();
-
-    static mut TYPE: glib_ffi::GType = gobject_ffi::G_TYPE_INVALID;
-    static ONCE: Once = ONCE_INIT;
-
-    ONCE.call_once(|| {
-        let type_name = CString::new("ExSharedRString").unwrap();
-
-        TYPE = gobject_ffi::g_boxed_type_register_static(
-            type_name.as_ptr(),
-            Some(mem::transmute(ex_shared_rstring_ref as *const c_void)),
-            Some(mem::transmute(ex_shared_rstring_unref as *const c_void)),
-        );
-
-    });
-
-    TYPE
+    SharedRString::get_type().to_glib()
 }

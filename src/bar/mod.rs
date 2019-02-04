@@ -14,16 +14,16 @@ use gobject_ffi;
 use foo;
 use nameable;
 
-use glib::Value;
-use glib::signal::{connect, SignalHandlerId};
+use glib;
+use glib::object::ObjectType;
+use glib::prelude::*;
+use glib::signal::{connect_raw, SignalHandlerId};
 use glib::translate::*;
 
-use std::ptr;
 use std::mem;
-use std::mem::transmute;
 
 glib_wrapper! {
-    pub struct Bar(Object<imp::Bar>): foo::Foo, nameable::Nameable;
+    pub struct Bar(Object<imp::Bar, imp::BarClass, BarClass>) @extends foo::Foo, @implements nameable::Nameable;
 
     match fn {
         get_type => || imp::ex_bar_get_type(),
@@ -44,11 +44,11 @@ impl Bar {
     }
 
     pub fn get_property_number(&self) -> f64 {
-        let mut value = Value::from(&0.0f64);
+        let mut value = glib::Value::from(&0.0f64);
         unsafe {
             gobject_ffi::g_object_get_property(
-                self.to_glib_none().0,
-                "number".to_glib_none().0,
+                self.as_ptr() as *mut gobject_ffi::GObject,
+                b"number\0".as_ptr() as *const _,
                 value.to_glib_none_mut().0,
             );
         }
@@ -58,34 +58,35 @@ impl Bar {
     pub fn set_property_number(&self, num: f64) {
         unsafe {
             gobject_ffi::g_object_set_property(
-                self.to_glib_none().0,
-                "number".to_glib_none().0,
-                Value::from(&num).to_glib_none().0,
+                self.as_ptr() as *mut gobject_ffi::GObject,
+                b"number\0".as_ptr() as *const _,
+                glib::Value::from(&num).to_glib_none().0,
             );
         }
     }
 
     pub fn connect_property_number_notify<F: Fn(&Self) + 'static>(&self, f: F) -> SignalHandlerId {
         unsafe {
-            let f: Box<Box<Fn(&Self) + 'static>> = Box::new(Box::new(f));
-            connect(
-                self.to_glib_none().0,
-                "notify::number",
-                transmute(notify_number_trampoline as usize),
-                Box::into_raw(f) as *mut _,
+            let f: Box<F> = Box::new(f);
+            connect_raw(
+                self.as_ptr() as *mut gobject_ffi::GObject,
+                b"notify::number\0".as_ptr() as *const _,
+                Some(mem::transmute(notify_number_trampoline::<Self, F> as usize)),
+                Box::into_raw(f),
             )
         }
     }
 }
 
-unsafe extern "C" fn notify_number_trampoline(
-    this: *mut imp::Bar,
+unsafe extern "C" fn notify_number_trampoline<P, F: Fn(&P) + 'static>(
+    this: glib_ffi::gpointer,
     _param_spec: glib_ffi::gpointer,
     f: glib_ffi::gpointer,
-) {
-    callback_guard!();
-    let f: &&(Fn(&Bar) + 'static) = transmute(f);
-    f(&from_glib_borrow(this))
+) where
+    P: IsA<Bar>,
+{
+    let f: &F = &*(f as *const _);
+    f(&Bar::from_glib_borrow(this as *mut imp::Bar).unsafe_cast())
 }
 
 #[cfg(test)]
@@ -127,8 +128,9 @@ mod tests {
 
         let counter = Rc::new(RefCell::new(0i32));
         let counter_clone = counter.clone();
-        bar.connect_property_number_notify(move |_| { *counter_clone.borrow_mut() += 1; });
-
+        bar.connect_property_number_notify(move |_| {
+            *counter_clone.borrow_mut() += 1;
+        });
 
         assert_eq!(*counter.borrow(), 0);
         assert_eq!(bar.get_number(), 0.0);
