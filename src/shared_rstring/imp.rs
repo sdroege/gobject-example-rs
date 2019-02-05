@@ -10,7 +10,7 @@ use libc::c_char;
 // No #[repr(C)] here as we export it as an opaque struct
 // If it was not opaque, it must be #[repr(C)]
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct SharedRString(Option<String>);
+pub struct SharedRString(Arc<Option<String>>);
 
 impl BoxedType for SharedRString {
     // This type name must be unique per process.
@@ -26,13 +26,13 @@ impl BoxedType for SharedRString {
 glib_boxed_derive_traits!(SharedRString);
 
 impl SharedRString {
-    fn new(s: Option<String>) -> Arc<SharedRString> {
-        Arc::new(SharedRString(s))
+    fn new(s: Option<String>) -> SharedRString {
+        SharedRString(Arc::new(s))
     }
 
     // FIXME: This could borrow the &str in theory!
     fn get(&self) -> Option<String> {
-        self.0.clone()
+        (*self.0).clone()
     }
 }
 
@@ -41,26 +41,23 @@ impl SharedRString {
 //
 #[no_mangle]
 pub unsafe extern "C" fn ex_shared_rstring_new(s: *const c_char) -> *mut SharedRString {
-    let s = SharedRString::new(from_glib_none(s));
-    Arc::into_raw(s) as *mut _
+    let s = Box::new(SharedRString::new(from_glib_none(s)));
+    Box::into_raw(s) as *mut _
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn ex_shared_rstring_ref(
     shared_rstring: *mut SharedRString,
 ) -> *mut SharedRString {
-    let shared_rstring = Arc::from_raw(shared_rstring);
-    let s = shared_rstring.clone();
+    let shared_rstring = &*shared_rstring;
+    let s = Box::new(shared_rstring.clone());
 
-    // Forget it and keep it alive, we will still need it later
-    let _ = Arc::into_raw(shared_rstring);
-
-    Arc::into_raw(s) as *mut _
+    Box::into_raw(s) as *mut _
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn ex_shared_rstring_unref(shared_rstring: *mut SharedRString) {
-    let _ = Arc::from_raw(shared_rstring);
+    let _ = Box::from_raw(shared_rstring);
 }
 
 #[no_mangle]
