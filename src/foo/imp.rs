@@ -92,10 +92,25 @@ impl ObjectSubclass for FooPrivate {
 
         klass.install_properties(&PROPERTIES);
 
-        klass.add_signal(
+        klass.add_signal_with_class_handler(
             "incremented",
+            glib::SignalFlags::empty(),
             &[i32::static_type(), i32::static_type()],
             glib::Type::Unit,
+            |_, args| {
+                let obj = args[0].get::<glib::Object>().unwrap();
+                let val = args[1].get::<i32>().unwrap();
+                let inc = args[2].get::<i32>().unwrap();
+
+                unsafe {
+                    let klass = &*(obj.get_object_class() as *const _ as *const FooClass);
+                    if let Some(ref func) = klass.incremented {
+                        func(obj.as_ptr() as *mut Foo, val, inc);
+                    }
+                }
+
+                None
+            },
         );
     }
 
@@ -112,9 +127,6 @@ impl ObjectImpl for FooPrivate {
 
     fn constructed(&self, obj: &glib::Object) {
         self.parent_constructed(obj);
-
-        // FIXME: Have no way of defining class handlers for interfaces yet
-        // Use g_signal_newv() which takes a GClosure!
     }
 
     fn set_property(&self, obj: &glib::Object, id: usize, value: &glib::Value) {
