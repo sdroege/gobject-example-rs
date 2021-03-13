@@ -22,11 +22,16 @@ use std::mem;
 use nameable;
 
 glib::wrapper! {
-    pub struct Foo(Object<imp::Foo, imp::FooClass, FooClass>) @implements nameable::Nameable;
+    pub struct Foo(Object<imp::Foo, imp::FooClass>) @implements nameable::Nameable;
 
     match fn {
         get_type => || imp::ex_foo_get_type(),
     }
+}
+
+#[cfg(not(feature = "bindings"))]
+unsafe impl glib::object::ObjectSubclassIs for Foo {
+    type Subclass = imp::FooPrivate;
 }
 
 impl Foo {
@@ -67,7 +72,7 @@ impl<O: IsA<Foo>> FooExt for O {
                 value.to_glib_none_mut().0,
             );
         }
-        value.get()
+        value.get().unwrap()
     }
 
     fn connect_incremented<F: Fn(&Self, i32, i32) + 'static>(&self, f: F) -> SignalHandlerId {
@@ -94,7 +99,7 @@ unsafe extern "C" fn connect_incremented_trampoline<P, F: Fn(&P, i32, i32) + 'st
     P: IsA<Foo>,
 {
     let f: &F = &*(f as *const F);
-    f(&Foo::from_glib_borrow(this).unsafe_cast(), val, inc)
+    f(&*Foo::from_glib_borrow(this).unsafe_cast_ref::<P>(), val, inc)
 }
 
 pub trait FooImpl: ObjectImpl + 'static {
@@ -108,7 +113,7 @@ pub trait FooImpl: ObjectImpl + 'static {
 
     fn parent_increment(&self, obj: &Foo, inc: i32) -> i32 {
         unsafe {
-            let data = self.get_type_data();
+            let data = Self::type_data();
             let parent_class = data.as_ref().get_parent_class() as *mut imp::FooClass;
             if let Some(ref f) = (*parent_class).increment {
                 f(obj.to_glib_none().0, inc)
@@ -120,7 +125,7 @@ pub trait FooImpl: ObjectImpl + 'static {
 
     fn parent_incremented(&self, obj: &Foo, val: i32, inc: i32) {
         unsafe {
-            let data = self.get_type_data();
+            let data = Self::type_data();
             let parent_class = data.as_ref().get_parent_class() as *mut imp::FooClass;
             if let Some(ref f) = (*parent_class).incremented {
                 f(obj.to_glib_none().0, val, inc)
@@ -129,14 +134,16 @@ pub trait FooImpl: ObjectImpl + 'static {
     }
 }
 
-unsafe impl<T: ObjectSubclass + FooImpl> IsSubclassable<T> for FooClass {
-    fn override_vfuncs(&mut self) {
-        <glib::ObjectClass as IsSubclassable<T>>::override_vfuncs(self);
-        unsafe {
-            let klass = &mut *(self as *mut Self as *mut imp::FooClass);
-            klass.increment = Some(increment_trampoline::<T>);
-            klass.incremented = Some(incremented_trampoline::<T>);
-        }
+unsafe impl<T: FooImpl> IsSubclassable<T> for Foo {
+    fn class_init(class: &mut glib::Class<Self>) {
+        <glib::Object as IsSubclassable<T>>::class_init(class);
+
+        let klass = class.as_mut();
+        klass.increment = Some(increment_trampoline::<T>);
+        klass.incremented = Some(incremented_trampoline::<T>);
+    }
+    fn instance_init(instance: &mut glib::subclass::InitializingObject<T>) {
+        <glib::Object as IsSubclassable<T>>::instance_init(instance);
     }
 }
 

@@ -54,19 +54,19 @@ where
     imp.get_name(from_glib_borrow::<_, Nameable>(nameable).unsafe_cast_ref()).to_glib_full()
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use foo::Foo;
-//     use glib::Cast;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use foo::Foo;
+    use glib::Cast;
 
-//     #[test]
-//     fn test_name() {
-//         let foo = Foo::new(Some("foo's name"));
+    #[test]
+    fn test_name() {
+        let foo = Foo::new(Some("foo's name"));
 
-//         // We cast here because otherwise we would just use the get_name() of foo itself
-//         let nameable = foo.upcast::<Nameable>();
+        // We cast here because otherwise we would just use the get_name() of foo itself
+        let nameable = foo.upcast::<Nameable>();
 
-//         assert_eq!(nameable.get_name(), Some("foo's name".into()));
-//     }
-// }
+        assert_eq!(nameable.get_name(), Some("foo's name".into()));
+    }
+}

@@ -41,28 +41,18 @@ unsafe impl ClassStruct for FooClass {
 }
 
 impl ops::Deref for FooClass {
-    type Target = glib::ObjectClass;
+    type Target = glib::Class<glib::Object>;
 
-    fn deref(&self) -> &glib::ObjectClass {
-        unsafe { &*(self as *const _ as *const glib::ObjectClass) }
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(self as *const _ as *const Self::Target) }
     }
 }
 
 impl ops::DerefMut for FooClass {
-    fn deref_mut(&mut self) -> &mut glib::ObjectClass {
-        unsafe { &mut *(self as *mut _ as *mut glib::ObjectClass) }
+    fn deref_mut(&mut self) -> &mut glib::Class<glib::Object> {
+        unsafe { &mut *(self as *mut _ as *mut glib::Class<glib::Object>) }
     }
 }
-
-static PROPERTIES: [subclass::Property; 1] = [subclass::Property("name", |name| {
-    glib::ParamSpec::string(
-        name,
-        "Name",
-        "Name of this object",
-        None,
-        glib::ParamFlags::READWRITE,
-    )
-})];
 
 // Our private state for the class
 //
@@ -74,44 +64,18 @@ pub struct FooPrivate {
     counter: RefCell<i32>,
 }
 
+#[glib::object_subclass]
 impl ObjectSubclass for FooPrivate {
     const NAME: &'static str = "ExFoo";
     type ParentType = glib::Object;
     type Instance = Foo;
+    type Type = FooWrapper;
     type Class = FooClass;
+    type Interfaces = (super::nameable::Nameable,);
 
-    glib_object_subclass!();
-
-    fn type_init(type_: &mut subclass::InitializingType<Self>) {
-        type_.add_interface::<super::nameable::Nameable>();
-    }
-
-    fn class_init(klass: &mut FooClass) {
+    fn class_init(klass: &mut Self::Class) {
         klass.increment = Some(increment_default_trampoline);
         klass.incremented = Some(incremented_default_trampoline);
-
-        klass.install_properties(&PROPERTIES);
-
-        klass.add_signal_with_class_handler(
-            "incremented",
-            glib::SignalFlags::empty(),
-            &[i32::static_type(), i32::static_type()],
-            glib::Type::Unit,
-            |_, args| {
-                let obj = args[0].get::<glib::Object>().unwrap();
-                let val = args[1].get::<i32>().unwrap();
-                let inc = args[2].get::<i32>().unwrap();
-
-                unsafe {
-                    let klass = &*(obj.get_object_class() as *const _ as *const FooClass);
-                    if let Some(ref func) = klass.incremented {
-                        func(obj.as_ptr() as *mut Foo, val, inc);
-                    }
-                }
-
-                None
-            },
-        );
     }
 
     fn new() -> Self {
@@ -123,30 +87,67 @@ impl ObjectSubclass for FooPrivate {
 }
 
 impl ObjectImpl for FooPrivate {
-    glib_object_impl!();
+    fn signals() -> &'static [glib::subclass::Signal] {
+        use once_cell::sync::Lazy;
+        static SIGNALS: Lazy<Vec<glib::subclass::Signal>> = Lazy::new(|| {
+            vec![
+                glib::subclass::Signal::builder(
+                    "incremented",
+                    &[i32::static_type().into(), i32::static_type().into()],
+                    glib::Type::UNIT.into(),
+                )
+                .class_handler(|_, args| {
+                    let obj = args[0].get::<glib::Object>().unwrap().unwrap();
+                    let val = args[1].get::<i32>().unwrap().unwrap();
+                    let inc = args[2].get::<i32>().unwrap().unwrap();
 
-    fn constructed(&self, obj: &glib::Object) {
-        self.parent_constructed(obj);
+                    unsafe {
+                        let klass = &*(obj.get_object_class() as *const _ as *const FooClass);
+                        if let Some(ref func) = klass.incremented {
+                            func(obj.as_ptr() as *mut Foo, val, inc);
+                        }
+                    }
+
+                    None
+                })
+                .build()
+            ]
+        });
+
+        SIGNALS.as_ref()
     }
 
-    fn set_property(&self, obj: &glib::Object, id: usize, value: &glib::Value) {
-        let prop = &PROPERTIES[id];
+    fn properties() -> &'static [glib::ParamSpec] {
+        use once_cell::sync::Lazy;
+        static PROPERTIES: Lazy<Vec<glib::ParamSpec>> = Lazy::new(|| {
+            vec![
+                glib::ParamSpec::string(
+                    "name",
+                    "Name",
+                    "Name of this object",
+                    None,
+                    glib::ParamFlags::READWRITE,
+                ),
+            ]
+        });
 
-        match *prop {
-            subclass::Property("name", ..) => {
-                let name = value.get();
+        PROPERTIES.as_ref()
+    }
+
+    fn set_property(&self, obj: &Self::Type, _id: usize, value: &glib::Value, pspec: &glib::ParamSpec) {
+        match pspec.get_name() {
+            "name" => {
+                let name = value.get().unwrap();
                 self.set_name(obj.downcast_ref().unwrap(), name);
             }
             _ => unimplemented!(),
         }
     }
 
-    fn get_property(&self, obj: &glib::Object, id: usize) -> Result<glib::Value, ()> {
-        let prop = &PROPERTIES[id];
-
-        match *prop {
-            subclass::Property("name", ..) => {
-                Ok(self.get_name(obj.downcast_ref().unwrap()).to_value())
+    fn get_property(&self, obj: &Self::Type, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
+        match pspec.get_name() {
+            "name" => {
+                self.get_name(obj.downcast_ref().unwrap()).to_value()
             }
             _ => unimplemented!(),
         }
@@ -154,8 +155,8 @@ impl ObjectImpl for FooPrivate {
 }
 
 impl super::nameable::NameableImpl for FooPrivate {
-    fn get_name(&self, this: &super::nameable::Nameable) -> Option<String> {
-        self.get_name(this.dynamic_cast_ref().unwrap())
+    fn get_name(&self, nameable: &Self::Type) -> Option<String> {
+        self.get_name(nameable.dynamic_cast_ref().unwrap())
     }
 }
 
@@ -168,7 +169,7 @@ impl FooPrivate {
 
         *val += inc;
 
-        this.emit("incremented", &[&*val, &inc]).unwrap();
+        this.emit_by_name("incremented", &[&*val, &inc]).unwrap();
 
         *val
     }
@@ -219,13 +220,9 @@ pub unsafe extern "C" fn ex_foo_get_name(this: *mut Foo) -> *mut c_char {
 // GObject glue
 #[no_mangle]
 pub unsafe extern "C" fn ex_foo_new(name: *const c_char) -> *mut Foo {
-    let obj = glib::Object::new(
-        FooPrivate::get_type(),
-        &[("name", &glib::GString::from_glib_borrow(name))],
-    )
-    .unwrap()
-    .downcast::<FooWrapper>()
-    .unwrap();
+    let obj = glib::Object::new::<FooWrapper>(
+        &[("name", &*glib::GString::from_glib_borrow(name))],
+    ).unwrap();
     obj.to_glib_full()
 }
 
