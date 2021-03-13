@@ -7,21 +7,9 @@ use libc::c_char;
 
 // No #[repr(C)] here as we export it as an opaque struct
 // If it was not opaque, it must be #[repr(C)]
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, glib::GBoxed)]
+#[gboxed(type_name = "ExRString")]
 pub struct RString(Option<String>);
-
-impl BoxedType for RString {
-    // This type name must be unique per process.
-    const NAME: &'static str = "ExRString";
-
-    // This macro defines a
-    //   fn get_type() -> glib::Type
-    // function
-    glib_boxed_type!();
-}
-
-// This macro derives some traits on the struct
-glib_boxed_derive_traits!(RString);
 
 impl RString {
     fn new(s: Option<String>) -> RString {

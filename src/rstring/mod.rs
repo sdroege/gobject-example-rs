@@ -10,7 +10,7 @@ pub mod imp {
 
 use glib::translate::*;
 
-glib_wrapper! {
+glib::wrapper! {
     pub struct RString(Boxed<imp::RString>);
 
     match fn {

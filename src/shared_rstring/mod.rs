@@ -10,12 +10,13 @@ pub mod imp {
 
 use glib::translate::*;
 
-glib_wrapper! {
-    pub struct SharedRString(Shared<imp::SharedRString>);
+glib::wrapper! {
+    #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+    pub struct SharedRString(Boxed<imp::SharedRString>);
 
     match fn {
-        ref => |ptr| imp::ex_shared_rstring_ref(ptr),
-        unref => |ptr| imp::ex_shared_rstring_unref(ptr),
+        copy => |ptr| imp::ex_shared_rstring_ref(ptr),
+        free => |ptr| imp::ex_shared_rstring_unref(ptr),
         get_type => || imp::ex_shared_rstring_get_type(),
     }
 }
