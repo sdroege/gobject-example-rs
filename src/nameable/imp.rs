@@ -18,20 +18,17 @@ pub struct Nameable(c_void);
 // Interface struct aka "vtable"
 //
 // Here we would store virtual methods and similar
+#[derive(Clone, Copy)]
 #[repr(C)]
 pub struct NameableInterface {
     pub parent_iface: gobject_ffi::GTypeInterface,
     pub get_name: Option<unsafe extern "C" fn(*mut Nameable) -> *mut c_char>,
 }
 
-impl ObjectInterface for NameableInterface {
+#[glib::object_interface]
+unsafe impl ObjectInterface for NameableInterface {
     const NAME: &'static str = "ExNameableInterface";
-
-    glib_object_interface!();
-
-    fn type_init(type_: &mut subclass::InitializingType<Self>) {
-        type_.add_prerequisite::<glib::Object>();
-    }
+    type Prerequisites = (glib::Object, );
 
     // Interface struct initialization, called from GObject
     fn interface_init(&mut self) {
@@ -71,6 +68,6 @@ pub unsafe extern "C" fn ex_nameable_get_type() -> glib_ffi::GType {
 #[no_mangle]
 pub unsafe extern "C" fn ex_nameable_get_name(this: *mut Nameable) -> *mut c_char {
     let wrapper = NameableWrapper::from_glib_borrow(this);
-    let iface = NameableInterface::from_instance(&wrapper);
+    let iface = NameableInterface::from_instance(&*wrapper);
     iface.get_name.map(|f| f(this)).unwrap_or(ptr::null_mut())
 }

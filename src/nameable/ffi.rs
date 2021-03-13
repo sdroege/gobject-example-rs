@@ -5,6 +5,7 @@ use libc::{c_char, c_void};
 #[repr(C)]
 pub struct Nameable(c_void);
 
+#[derive(Clone, Copy)]
 #[repr(C)]
 pub struct NameableInterface {
     pub parent_iface: gobject_ffi::GTypeInterface,
