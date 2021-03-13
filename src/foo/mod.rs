@@ -21,7 +21,7 @@ use std::mem;
 
 use nameable;
 
-glib_wrapper! {
+glib::wrapper! {
     pub struct Foo(Object<imp::Foo, imp::FooClass, FooClass>) @implements nameable::Nameable;
 
     match fn {
