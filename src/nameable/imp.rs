@@ -1,6 +1,5 @@
 use std::ptr;
 
-use glib;
 use glib::subclass::prelude::*;
 use glib::translate::{from_glib_borrow, FromGlibPtrBorrow, ToGlib, ToGlibPtr};
 
@@ -56,11 +55,14 @@ impl NameableInterface {
 // Public C functions below
 //
 #[no_mangle]
-pub unsafe extern "C" fn ex_nameable_get_type() -> glib::ffi::GType {
+pub extern "C" fn ex_nameable_get_type() -> glib::ffi::GType {
     NameableInterface::get_type().to_glib()
 }
 
 // Virtual method callers
+/// # Safety
+///
+/// Must be a Nameable interface.
 #[no_mangle]
 pub unsafe extern "C" fn ex_nameable_get_name(this: *mut Nameable) -> *mut c_char {
     let wrapper = NameableWrapper::from_glib_borrow(this);

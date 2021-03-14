@@ -1,6 +1,4 @@
 use crate::foo;
-use glib::ffi;
-use glib::gobject_ffi;
 use libc::c_char;
 
 #[repr(C)]

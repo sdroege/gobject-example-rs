@@ -25,12 +25,18 @@ impl SharedRString {
 //
 // Public C functions below
 //
+/// # Safety
+///
+/// Must be a valid C string, 0-terminated.
 #[no_mangle]
 pub unsafe extern "C" fn ex_shared_rstring_new(s: *const c_char) -> *mut SharedRString {
     let s = Box::new(SharedRString::new(from_glib_none(s)));
     Box::into_raw(s) as *mut _
 }
 
+/// # Safety
+///
+/// Must be a valid SharedRString pointer.
 #[no_mangle]
 pub unsafe extern "C" fn ex_shared_rstring_ref(
     shared_rstring: *const SharedRString,
@@ -41,11 +47,17 @@ pub unsafe extern "C" fn ex_shared_rstring_ref(
     Box::into_raw(s) as *mut _
 }
 
+/// # Safety
+///
+/// Must be a valid SharedRString pointer.
 #[no_mangle]
 pub unsafe extern "C" fn ex_shared_rstring_unref(shared_rstring: *mut SharedRString) {
     let _ = Box::from_raw(shared_rstring);
 }
 
+/// # Safety
+///
+/// Must be a valid SharedRString pointer.
 #[no_mangle]
 pub unsafe extern "C" fn ex_shared_rstring_get(
     shared_rstring: *const SharedRString,
@@ -57,6 +69,6 @@ pub unsafe extern "C" fn ex_shared_rstring_get(
 
 // GObject glue
 #[no_mangle]
-pub unsafe extern "C" fn ex_shared_rstring_get_type() -> glib::ffi::GType {
+pub extern "C" fn ex_shared_rstring_get_type() -> glib::ffi::GType {
     SharedRString::get_type().to_glib()
 }
