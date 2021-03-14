@@ -10,9 +10,6 @@ pub mod imp {
     pub use super::ffi::*;
 }
 
-use glib_ffi;
-use gobject_ffi;
-
 use glib;
 use glib::object::ObjectType;
 use glib::prelude::*;
@@ -54,8 +51,8 @@ impl Bar {
     pub fn get_property_number(&self) -> f64 {
         let mut value = glib::Value::from(&0.0f64);
         unsafe {
-            gobject_ffi::g_object_get_property(
-                self.as_ptr() as *mut gobject_ffi::GObject,
+            glib::gobject_ffi::g_object_get_property(
+                self.as_ptr() as *mut glib::gobject_ffi::GObject,
                 b"number\0".as_ptr() as *const _,
                 value.to_glib_none_mut().0,
             );
@@ -65,8 +62,8 @@ impl Bar {
 
     pub fn set_property_number(&self, num: f64) {
         unsafe {
-            gobject_ffi::g_object_set_property(
-                self.as_ptr() as *mut gobject_ffi::GObject,
+            glib::gobject_ffi::g_object_set_property(
+                self.as_ptr() as *mut glib::gobject_ffi::GObject,
                 b"number\0".as_ptr() as *const _,
                 glib::Value::from(&num).to_glib_none().0,
             );
@@ -77,7 +74,7 @@ impl Bar {
         unsafe {
             let f: Box<F> = Box::new(f);
             connect_raw(
-                self.as_ptr() as *mut gobject_ffi::GObject,
+                self.as_ptr() as *mut glib::gobject_ffi::GObject,
                 b"notify::number\0".as_ptr() as *const _,
                 Some(mem::transmute(notify_number_trampoline::<Self, F> as usize)),
                 Box::into_raw(f),
@@ -88,8 +85,8 @@ impl Bar {
 
 unsafe extern "C" fn notify_number_trampoline<P, F: Fn(&P) + 'static>(
     this: *mut ffi::Bar,
-    _param_spec: glib_ffi::gpointer,
-    f: glib_ffi::gpointer,
+    _param_spec: glib::ffi::gpointer,
+    f: glib::ffi::gpointer,
 ) where
     P: IsA<Bar>,
 {

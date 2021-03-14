@@ -10,9 +10,6 @@ pub mod imp {
     pub use super::ffi::*;
 }
 
-use glib_ffi;
-use gobject_ffi;
-
 use glib;
 use glib::prelude::*;
 use glib::signal::{connect_raw, SignalHandlerId};
@@ -69,8 +66,8 @@ impl<O: IsA<Foo>> FooExt for O {
     fn get_property_name(&self) -> Option<String> {
         let mut value = glib::Value::from(None::<&str>);
         unsafe {
-            gobject_ffi::g_object_get_property(
-                self.as_ptr() as *mut gobject_ffi::GObject,
+            glib::gobject_ffi::g_object_get_property(
+                self.as_ptr() as *mut glib::gobject_ffi::GObject,
                 b"name\0".as_ptr() as *const _,
                 value.to_glib_none_mut().0,
             );
@@ -82,7 +79,7 @@ impl<O: IsA<Foo>> FooExt for O {
         unsafe {
             let f: Box<F> = Box::new(f);
             connect_raw(
-                self.as_ptr() as *mut gobject_ffi::GObject,
+                self.as_ptr() as *mut glib::gobject_ffi::GObject,
                 b"incremented\0".as_ptr() as *const _,
                 Some(mem::transmute(
                     connect_incremented_trampoline::<Self, F> as usize,
@@ -97,7 +94,7 @@ unsafe extern "C" fn connect_incremented_trampoline<P, F: Fn(&P, i32, i32) + 'st
     this: *mut ffi::Foo,
     val: i32,
     inc: i32,
-    f: glib_ffi::gpointer,
+    f: glib::ffi::gpointer,
 ) where
     P: IsA<Foo>,
 {

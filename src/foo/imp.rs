@@ -1,8 +1,4 @@
-use glib_ffi;
-use gobject_ffi;
-
 use std::ops;
-
 use std::cell::RefCell;
 
 use glib;
@@ -25,7 +21,7 @@ pub mod ffi {
 // Here we would store virtual methods and similar
 #[repr(C)]
 pub struct FooClass {
-    pub parent_class: gobject_ffi::GObjectClass,
+    pub parent_class: glib::gobject_ffi::GObjectClass,
     pub increment: Option<unsafe extern "C" fn(*mut ffi::Foo, inc: i32) -> i32>,
     pub incremented: Option<unsafe extern "C" fn(*mut ffi::Foo, val: i32, inc: i32)>,
 }
@@ -219,7 +215,7 @@ pub unsafe extern "C" fn ex_foo_new(name: *const c_char) -> *mut ffi::Foo {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn ex_foo_get_type() -> glib_ffi::GType {
+pub unsafe extern "C" fn ex_foo_get_type() -> glib::ffi::GType {
     Foo::get_type().to_glib()
 }
 

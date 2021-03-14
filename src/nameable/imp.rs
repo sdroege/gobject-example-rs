@@ -1,6 +1,3 @@
-use glib_ffi;
-use gobject_ffi;
-
 use std::ptr;
 
 use glib;
@@ -20,7 +17,7 @@ pub struct Nameable(c_void);
 #[derive(Clone, Copy)]
 #[repr(C)]
 pub struct NameableInterface {
-    pub parent_iface: gobject_ffi::GTypeInterface,
+    pub parent_iface: glib::gobject_ffi::GTypeInterface,
     pub get_name: Option<unsafe extern "C" fn(*mut Nameable) -> *mut c_char>,
 }
 
@@ -59,7 +56,7 @@ impl NameableInterface {
 // Public C functions below
 //
 #[no_mangle]
-pub unsafe extern "C" fn ex_nameable_get_type() -> glib_ffi::GType {
+pub unsafe extern "C" fn ex_nameable_get_type() -> glib::ffi::GType {
     NameableInterface::get_type().to_glib()
 }
 
