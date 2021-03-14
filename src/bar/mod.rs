@@ -1,5 +1,7 @@
 #[cfg(not(feature = "bindings"))]
 pub mod imp;
+#[cfg(not(feature = "bindings"))]
+use self::imp::ffi;
 
 #[cfg(feature = "bindings")]
 mod ffi;
@@ -33,7 +35,7 @@ glib::wrapper! {
 
 #[cfg(not(feature = "bindings"))]
 glib::wrapper! {
-    pub struct Bar(ObjectSubclass<imp::BarPrivate>) @extends foo::Foo, @implements nameable::Nameable;
+    pub struct Bar(ObjectSubclass<imp::Bar>) @extends foo::Foo, @implements nameable::Nameable;
 }
 
 impl Bar {
@@ -85,7 +87,7 @@ impl Bar {
 }
 
 unsafe extern "C" fn notify_number_trampoline<P, F: Fn(&P) + 'static>(
-    this: *mut imp::Bar,
+    this: *mut ffi::Bar,
     _param_spec: glib_ffi::gpointer,
     f: glib_ffi::gpointer,
 ) where

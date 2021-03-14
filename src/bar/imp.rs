@@ -4,7 +4,6 @@ use std::cell::RefCell;
 
 use glib;
 use glib::prelude::*;
-use glib::subclass;
 use glib::subclass::prelude::*;
 use glib::translate::*;
 
@@ -13,21 +12,23 @@ use libc::c_char;
 use bar::Bar as BarWrapper;
 use foo;
 
-pub type Bar = <BarPrivate as ObjectSubclass>::Instance;
-pub type BarClass = <BarPrivate as ObjectSubclass>::Class;
+
+pub mod ffi {
+    pub type Bar = <super::Bar as super::ObjectSubclass>::Instance;
+}
 
 // We could put our data into the Bar struct above but that's discouraged nowadays so let's just
-// keep it all in BarPrivate
+// keep it all in Bar
 //
 // We use RefCells here for each field as GObject conceptually uses interior mutability everywhere.
 // If this was to be used from multiple threads, these would have to be mutexes or otherwise
 // Sync+Send
-pub struct BarPrivate {
+pub struct Bar {
     number: RefCell<f64>,
 }
 
 #[glib::object_subclass]
-impl ObjectSubclass for BarPrivate {
+impl ObjectSubclass for Bar {
     const NAME: &'static str = "ExBar";
     type ParentType = foo::Foo;
     type Type = BarWrapper;
@@ -39,7 +40,7 @@ impl ObjectSubclass for BarPrivate {
     }
 }
 
-impl ObjectImpl for BarPrivate {
+impl ObjectImpl for Bar {
     fn properties() -> &'static [glib::ParamSpec] {
         use once_cell::sync::Lazy;
         static PROPERTIES: Lazy<Vec<glib::ParamSpec>> = Lazy::new(|| {
@@ -79,13 +80,13 @@ impl ObjectImpl for BarPrivate {
     }
 }
 
-impl foo::FooImpl for BarPrivate {
+impl foo::FooImpl for Bar {
     fn increment(&self, obj: &foo::Foo, inc: i32) -> i32 {
         self.parent_increment(obj, 2 * inc)
     }
 }
 
-impl BarPrivate {
+impl Bar {
     fn set_number(&self, this: &BarWrapper, num: f64) {
         *self.number.borrow_mut() = num;
         this.notify("number");
@@ -102,20 +103,20 @@ impl BarPrivate {
 
 // Trampolines to safe Rust implementations
 #[no_mangle]
-pub unsafe extern "C" fn ex_bar_get_number(this: *mut Bar) -> f64 {
+pub unsafe extern "C" fn ex_bar_get_number(this: *mut ffi::Bar) -> f64 {
     let imp = (*this).get_impl();
     imp.get_number(&from_glib_borrow(this))
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn ex_bar_set_number(this: *mut Bar, num: f64) {
+pub unsafe extern "C" fn ex_bar_set_number(this: *mut ffi::Bar, num: f64) {
     let imp = (*this).get_impl();
     imp.set_number(&from_glib_borrow(this), num);
 }
 
 // GObject glue
 #[no_mangle]
-pub unsafe extern "C" fn ex_bar_new(name: *const c_char) -> *mut Bar {
+pub unsafe extern "C" fn ex_bar_new(name: *const c_char) -> *mut ffi::Bar {
     let obj = glib::Object::new::<BarWrapper>(
         &[("name", &*glib::GString::from_glib_borrow(name))],
     )
@@ -125,5 +126,5 @@ pub unsafe extern "C" fn ex_bar_new(name: *const c_char) -> *mut Bar {
 
 #[no_mangle]
 pub unsafe extern "C" fn ex_bar_get_type() -> glib_ffi::GType {
-    BarPrivate::get_type().to_glib()
+    Bar::get_type().to_glib()
 }
