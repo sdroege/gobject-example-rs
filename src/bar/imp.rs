@@ -16,18 +16,6 @@ use foo;
 pub type Bar = <BarPrivate as ObjectSubclass>::Instance;
 pub type BarClass = <BarPrivate as ObjectSubclass>::Class;
 
-static PROPERTIES: [subclass::Property; 1] = [subclass::Property("number", |name| {
-    glib::ParamSpec::double(
-        name,
-        "Number`",
-        "Some Number",
-        0.0,
-        100.0,
-        0.0,
-        glib::ParamFlags::READWRITE,
-    )
-})];
-
 // We could put our data into the Bar struct above but that's discouraged nowadays so let's just
 // keep it all in BarPrivate
 //
@@ -38,17 +26,11 @@ pub struct BarPrivate {
     number: RefCell<f64>,
 }
 
+#[glib::object_subclass]
 impl ObjectSubclass for BarPrivate {
     const NAME: &'static str = "ExBar";
     type ParentType = foo::Foo;
-    type Instance = subclass::simple::InstanceStruct<Self>;
-    type Class = subclass::simple::ClassStruct<Self>;
-
-    glib_object_subclass!();
-
-    fn class_init(klass: &mut Self::Class) {
-        klass.install_properties(&PROPERTIES);
-    }
+    type Type = BarWrapper;
 
     fn new() -> Self {
         Self {
@@ -58,26 +40,39 @@ impl ObjectSubclass for BarPrivate {
 }
 
 impl ObjectImpl for BarPrivate {
-    glib_object_impl!();
+    fn properties() -> &'static [glib::ParamSpec] {
+        use once_cell::sync::Lazy;
+        static PROPERTIES: Lazy<Vec<glib::ParamSpec>> = Lazy::new(|| {
+            vec![
+                glib::ParamSpec::double(
+                    "number",
+                    "Number",
+                    "Some number",
+                    0.0,
+                    100.0,
+                    0.0,
+                    glib::ParamFlags::READWRITE,
+                ),
+            ]
+        });
 
-    fn set_property(&self, obj: &glib::Object, id: usize, value: &glib::Value) {
-        let prop = &PROPERTIES[id];
+        PROPERTIES.as_ref()
+    }
 
-        match *prop {
-            subclass::Property("number", ..) => {
-                let number = value.get().unwrap();
+    fn set_property(&self, obj: &Self::Type, _id: usize, value: &glib::Value, pspec: &glib::ParamSpec) {
+        match pspec.get_name() {
+            "number" => {
+                let number = value.get().unwrap().unwrap();
                 self.set_number(obj.downcast_ref().unwrap(), number);
             }
             _ => unimplemented!(),
         }
     }
 
-    fn get_property(&self, obj: &glib::Object, id: usize) -> Result<glib::Value, ()> {
-        let prop = &PROPERTIES[id];
-
-        match *prop {
-            subclass::Property("number", ..) => {
-                Ok(self.get_number(obj.downcast_ref().unwrap()).to_value())
+    fn get_property(&self, obj: &Self::Type, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
+        match pspec.get_name() {
+            "number" => {
+                self.get_number(obj.downcast_ref().unwrap()).to_value()
             }
             _ => unimplemented!(),
         }
@@ -121,12 +116,9 @@ pub unsafe extern "C" fn ex_bar_set_number(this: *mut Bar, num: f64) {
 // GObject glue
 #[no_mangle]
 pub unsafe extern "C" fn ex_bar_new(name: *const c_char) -> *mut Bar {
-    let obj = glib::Object::new(
-        BarPrivate::get_type(),
-        &[("name", &glib::GString::from_glib_borrow(name))],
+    let obj = glib::Object::new::<BarWrapper>(
+        &[("name", &*glib::GString::from_glib_borrow(name))],
     )
-    .unwrap()
-    .downcast::<BarWrapper>()
     .unwrap();
     obj.to_glib_full()
 }
