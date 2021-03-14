@@ -26,12 +26,18 @@ impl RString {
 //
 // Public C functions below
 //
+/// # Safety
+///
+/// Must be a valid C string, 0-terminated.
 #[no_mangle]
 pub unsafe extern "C" fn ex_rstring_new(s: *const c_char) -> *mut RString {
     let s = Box::new(RString::new(from_glib_none(s)));
     Box::into_raw(s)
 }
 
+/// # Safety
+///
+/// Must be a valid RString pointer.
 #[no_mangle]
 pub unsafe extern "C" fn ex_rstring_copy(rstring: *const RString) -> *mut RString {
     let rstring = &*rstring;
@@ -39,17 +45,26 @@ pub unsafe extern "C" fn ex_rstring_copy(rstring: *const RString) -> *mut RStrin
     Box::into_raw(s)
 }
 
+/// # Safety
+///
+/// Must be a valid RString pointer.
 #[no_mangle]
 pub unsafe extern "C" fn ex_rstring_free(rstring: *mut RString) {
     let _ = Box::from_raw(rstring);
 }
 
+/// # Safety
+///
+/// Must be a valid RString pointer.
 #[no_mangle]
 pub unsafe extern "C" fn ex_rstring_get(rstring: *const RString) -> *mut c_char {
     let rstring = &*rstring;
     rstring.get().to_glib_full()
 }
 
+/// # Safety
+///
+/// Must be a valid RString pointer, and a valid C string, 0-terminated.
 #[no_mangle]
 pub unsafe extern "C" fn ex_rstring_set(rstring: *mut RString, s: *const c_char) {
     let rstring = &mut *rstring;
@@ -58,6 +73,6 @@ pub unsafe extern "C" fn ex_rstring_set(rstring: *mut RString, s: *const c_char)
 
 // GObject glue
 #[no_mangle]
-pub unsafe extern "C" fn ex_rstring_get_type() -> glib::ffi::GType {
+pub extern "C" fn ex_rstring_get_type() -> glib::ffi::GType {
     RString::get_type().to_glib()
 }

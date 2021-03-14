@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 
-use glib;
 use glib::prelude::*;
 use glib::subclass::prelude::*;
 use glib::translate::*;
@@ -101,12 +100,19 @@ impl Bar {
 //
 
 // Trampolines to safe Rust implementations
+//
+/// # Safety
+///
+/// Must be a BarInstance object.
 #[no_mangle]
 pub unsafe extern "C" fn ex_bar_get_number(this: *mut ffi::Bar) -> f64 {
     let imp = (*this).get_impl();
     imp.get_number(&from_glib_borrow(this))
 }
 
+/// # Safety
+///
+/// Must be a BarInstance object.
 #[no_mangle]
 pub unsafe extern "C" fn ex_bar_set_number(this: *mut ffi::Bar, num: f64) {
     let imp = (*this).get_impl();
@@ -114,6 +120,9 @@ pub unsafe extern "C" fn ex_bar_set_number(this: *mut ffi::Bar, num: f64) {
 }
 
 // GObject glue
+/// # Safety
+///
+/// Must be a valid C string, 0-terminated.
 #[no_mangle]
 pub unsafe extern "C" fn ex_bar_new(name: *const c_char) -> *mut ffi::Bar {
     let obj = glib::Object::new::<BarWrapper>(&[("name", &*glib::GString::from_glib_borrow(name))])
@@ -122,6 +131,6 @@ pub unsafe extern "C" fn ex_bar_new(name: *const c_char) -> *mut ffi::Bar {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn ex_bar_get_type() -> glib::ffi::GType {
+pub extern "C" fn ex_bar_get_type() -> glib::ffi::GType {
     Bar::get_type().to_glib()
 }

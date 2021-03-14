@@ -10,7 +10,6 @@ pub mod imp {
     pub use super::ffi::*;
 }
 
-use glib;
 use glib::object::ObjectType;
 use glib::prelude::*;
 use glib::signal::{connect_raw, SignalHandlerId};

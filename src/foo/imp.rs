@@ -1,7 +1,6 @@
-use std::ops;
 use std::cell::RefCell;
+use std::ops;
 
-use glib;
 use glib::prelude::*;
 use glib::subclass::prelude::*;
 use glib::translate::*;
@@ -186,6 +185,9 @@ impl Foo {
 //
 
 // Virtual method callers
+/// # Safety
+///
+/// Must be a FooInstance object.
 #[no_mangle]
 pub unsafe extern "C" fn ex_foo_increment(this: *mut ffi::Foo, inc: i32) -> i32 {
     let klass = (*this).get_class();
@@ -194,12 +196,18 @@ pub unsafe extern "C" fn ex_foo_increment(this: *mut ffi::Foo, inc: i32) -> i32 
 }
 
 // Trampolines to safe Rust implementations
+/// # Safety
+///
+/// Must be a FooInstance object.
 #[no_mangle]
 pub unsafe extern "C" fn ex_foo_get_counter(this: *mut ffi::Foo) -> i32 {
     let imp = (*this).get_impl();
     imp.get_counter(&from_glib_borrow(this))
 }
 
+/// # Safety
+///
+/// Must be a FooInstance object.
 #[no_mangle]
 pub unsafe extern "C" fn ex_foo_get_name(this: *mut ffi::Foo) -> *mut c_char {
     let imp = (*this).get_impl();
@@ -207,6 +215,9 @@ pub unsafe extern "C" fn ex_foo_get_name(this: *mut ffi::Foo) -> *mut c_char {
 }
 
 // GObject glue
+/// # Safety
+///
+/// Must be a valid C string, 0-terminated.
 #[no_mangle]
 pub unsafe extern "C" fn ex_foo_new(name: *const c_char) -> *mut ffi::Foo {
     let obj = glib::Object::new::<FooWrapper>(&[("name", &*glib::GString::from_glib_borrow(name))])
@@ -215,7 +226,7 @@ pub unsafe extern "C" fn ex_foo_new(name: *const c_char) -> *mut ffi::Foo {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn ex_foo_get_type() -> glib::ffi::GType {
+pub extern "C" fn ex_foo_get_type() -> glib::ffi::GType {
     Foo::get_type().to_glib()
 }
 
