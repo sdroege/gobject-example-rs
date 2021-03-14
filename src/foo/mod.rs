@@ -7,7 +7,7 @@ use self::imp::ffi;
 mod ffi;
 #[cfg(feature = "bindings")]
 pub mod imp {
-    pub use foo::ffi::*;
+    pub use super::ffi::*;
 }
 
 use glib_ffi;
@@ -21,11 +21,11 @@ use glib::translate::*;
 
 use std::mem;
 
-use nameable;
+use crate::nameable::Nameable;
 
 #[cfg(feature = "bindings")]
 glib::wrapper! {
-    pub struct Foo(Object<imp::Foo, imp::FooClass>) @implements nameable::Nameable;
+    pub struct Foo(Object<imp::Foo, imp::FooClass>) @implements Nameable;
 
     match fn {
         get_type => || imp::ex_foo_get_type(),
@@ -34,7 +34,7 @@ glib::wrapper! {
 
 #[cfg(not(feature = "bindings"))]
 glib::wrapper! {
-    pub struct Foo(ObjectSubclass<imp::Foo>) @implements nameable::Nameable;
+    pub struct Foo(ObjectSubclass<imp::Foo>) @implements Nameable;
 }
 
 impl Foo {

@@ -7,14 +7,11 @@ use self::imp::ffi;
 mod ffi;
 #[cfg(feature = "bindings")]
 pub mod imp {
-    pub use bar::ffi::*;
+    pub use super::ffi::*;
 }
 
 use glib_ffi;
 use gobject_ffi;
-
-use foo;
-use nameable;
 
 use glib;
 use glib::object::ObjectType;
@@ -24,9 +21,12 @@ use glib::translate::*;
 
 use std::mem;
 
+use crate::foo::Foo;
+use crate::nameable::Nameable;
+
 #[cfg(feature = "bindings")]
 glib::wrapper! {
-    pub struct Bar(Object<imp::Bar, imp::BarClass>) @extends foo::Foo, @implements nameable::Nameable;
+    pub struct Bar(Object<imp::Bar, imp::BarClass>) @extends Foo, @implements Nameable;
 
     match fn {
         get_type => || imp::ex_bar_get_type(),
@@ -35,7 +35,7 @@ glib::wrapper! {
 
 #[cfg(not(feature = "bindings"))]
 glib::wrapper! {
-    pub struct Bar(ObjectSubclass<imp::Bar>) @extends foo::Foo, @implements nameable::Nameable;
+    pub struct Bar(ObjectSubclass<imp::Bar>) @extends Foo, @implements Nameable;
 }
 
 impl Bar {
@@ -100,7 +100,7 @@ unsafe extern "C" fn notify_number_trampoline<P, F: Fn(&P) + 'static>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use foo::FooExt;
+    use crate::foo::FooExt;
     use std::cell::RefCell;
     use std::rc::Rc;
 

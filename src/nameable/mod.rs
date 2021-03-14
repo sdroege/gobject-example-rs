@@ -5,7 +5,7 @@ pub mod imp;
 mod ffi;
 #[cfg(feature = "bindings")]
 pub mod imp {
-    pub use nameable::ffi::*;
+    pub use super::ffi::*;
 }
 
 use glib::subclass::prelude::*;
@@ -57,8 +57,8 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use foo::Foo;
+    use crate::foo::Foo;
+    use crate::nameable::{Nameable, NameableExt};
     use glib::Cast;
 
     #[test]

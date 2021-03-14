@@ -1,4 +1,4 @@
-use foo;
+use crate::foo;
 use glib_ffi;
 use gobject_ffi;
 use libc::c_char;
