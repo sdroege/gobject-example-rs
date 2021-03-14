@@ -51,7 +51,8 @@ where
     let instance = &*(nameable as *mut T::Instance);
     let imp = instance.get_impl();
 
-    imp.get_name(from_glib_borrow::<_, Nameable>(nameable).unsafe_cast_ref()).to_glib_full()
+    imp.get_name(from_glib_borrow::<_, Nameable>(nameable).unsafe_cast_ref())
+        .to_glib_full()
 }
 
 #[cfg(test)]

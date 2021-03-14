@@ -49,7 +49,9 @@ pub unsafe extern "C" fn ex_shared_rstring_unref(shared_rstring: *mut SharedRStr
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn ex_shared_rstring_get(shared_rstring: *const SharedRString) -> *mut c_char {
+pub unsafe extern "C" fn ex_shared_rstring_get(
+    shared_rstring: *const SharedRString,
+) -> *mut c_char {
     let shared_rstring = &*shared_rstring;
     // FIXME: This could borrow the &str in theory!
     shared_rstring.get().to_glib_full()

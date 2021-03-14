@@ -12,7 +12,6 @@ use libc::c_char;
 use bar::Bar as BarWrapper;
 use foo;
 
-
 pub mod ffi {
     pub type Bar = <super::Bar as super::ObjectSubclass>::Instance;
 }
@@ -44,23 +43,27 @@ impl ObjectImpl for Bar {
     fn properties() -> &'static [glib::ParamSpec] {
         use once_cell::sync::Lazy;
         static PROPERTIES: Lazy<Vec<glib::ParamSpec>> = Lazy::new(|| {
-            vec![
-                glib::ParamSpec::double(
-                    "number",
-                    "Number",
-                    "Some number",
-                    0.0,
-                    100.0,
-                    0.0,
-                    glib::ParamFlags::READWRITE,
-                ),
-            ]
+            vec![glib::ParamSpec::double(
+                "number",
+                "Number",
+                "Some number",
+                0.0,
+                100.0,
+                0.0,
+                glib::ParamFlags::READWRITE,
+            )]
         });
 
         PROPERTIES.as_ref()
     }
 
-    fn set_property(&self, obj: &Self::Type, _id: usize, value: &glib::Value, pspec: &glib::ParamSpec) {
+    fn set_property(
+        &self,
+        obj: &Self::Type,
+        _id: usize,
+        value: &glib::Value,
+        pspec: &glib::ParamSpec,
+    ) {
         match pspec.get_name() {
             "number" => {
                 let number = value.get().unwrap().unwrap();
@@ -72,9 +75,7 @@ impl ObjectImpl for Bar {
 
     fn get_property(&self, obj: &Self::Type, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
         match pspec.get_name() {
-            "number" => {
-                self.get_number(obj.downcast_ref().unwrap()).to_value()
-            }
+            "number" => self.get_number(obj.downcast_ref().unwrap()).to_value(),
             _ => unimplemented!(),
         }
     }
@@ -117,10 +118,8 @@ pub unsafe extern "C" fn ex_bar_set_number(this: *mut ffi::Bar, num: f64) {
 // GObject glue
 #[no_mangle]
 pub unsafe extern "C" fn ex_bar_new(name: *const c_char) -> *mut ffi::Bar {
-    let obj = glib::Object::new::<BarWrapper>(
-        &[("name", &*glib::GString::from_glib_borrow(name))],
-    )
-    .unwrap();
+    let obj = glib::Object::new::<BarWrapper>(&[("name", &*glib::GString::from_glib_borrow(name))])
+        .unwrap();
     obj.to_glib_full()
 }
 

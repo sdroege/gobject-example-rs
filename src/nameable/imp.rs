@@ -27,7 +27,7 @@ pub struct NameableInterface {
 #[glib::object_interface]
 unsafe impl ObjectInterface for NameableInterface {
     const NAME: &'static str = "ExNameableInterface";
-    type Prerequisites = (glib::Object, );
+    type Prerequisites = (glib::Object,);
 
     // Interface struct initialization, called from GObject
     fn interface_init(&mut self) {
