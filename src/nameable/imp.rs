@@ -3,8 +3,6 @@ use std::ptr;
 use glib::subclass::prelude::*;
 use glib::translate::{from_glib_borrow, FromGlibPtrBorrow, ToGlib, ToGlibPtr};
 
-use super::Nameable as NameableWrapper;
-
 use libc::{c_char, c_void};
 
 // Instance struct
@@ -46,7 +44,7 @@ unsafe extern "C" fn get_name_default_trampoline(this: *mut Nameable) -> *mut c_
 // Safe implementations. These take the wrapper type, and not &Self, as first argument
 //
 impl NameableInterface {
-    fn get_name_default(_this: &NameableWrapper) -> Option<String> {
+    fn get_name_default(_this: &super::Nameable) -> Option<String> {
         None
     }
 }
@@ -65,7 +63,7 @@ pub extern "C" fn ex_nameable_get_type() -> glib::ffi::GType {
 /// Must be a Nameable interface.
 #[no_mangle]
 pub unsafe extern "C" fn ex_nameable_get_name(this: *mut Nameable) -> *mut c_char {
-    let wrapper = NameableWrapper::from_glib_borrow(this);
+    let wrapper = super::Nameable::from_glib_borrow(this);
     let iface = NameableInterface::from_instance(&*wrapper);
     iface.get_name.map(|f| f(this)).unwrap_or(ptr::null_mut())
 }

@@ -6,7 +6,6 @@ use glib::translate::*;
 
 use libc::c_char;
 
-use super::Bar as BarWrapper;
 use crate::foo::*;
 
 pub mod ffi {
@@ -28,7 +27,7 @@ pub struct Bar {
 impl ObjectSubclass for Bar {
     const NAME: &'static str = "ExBar";
     type ParentType = Foo;
-    type Type = BarWrapper;
+    type Type = super::Bar;
 }
 
 impl ObjectImpl for Bar {
@@ -80,12 +79,12 @@ impl FooImpl for Bar {
 }
 
 impl Bar {
-    fn set_number(&self, this: &BarWrapper, num: f64) {
+    fn set_number(&self, this: &super::Bar, num: f64) {
         *self.number.borrow_mut() = num;
         this.notify("number");
     }
 
-    fn get_number(&self, _this: &BarWrapper) -> f64 {
+    fn get_number(&self, _this: &super::Bar) -> f64 {
         *self.number.borrow_mut()
     }
 }
@@ -120,7 +119,7 @@ pub unsafe extern "C" fn ex_bar_set_number(this: *mut ffi::Bar, num: f64) {
 /// Must be a valid C string, 0-terminated.
 #[no_mangle]
 pub unsafe extern "C" fn ex_bar_new(name: *const c_char) -> *mut ffi::Bar {
-    let obj = glib::Object::new::<BarWrapper>(&[("name", &*glib::GString::from_glib_borrow(name))])
+    let obj = glib::Object::new::<super::Bar>(&[("name", &*glib::GString::from_glib_borrow(name))])
         .unwrap();
     obj.to_glib_full()
 }

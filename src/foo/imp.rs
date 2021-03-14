@@ -8,7 +8,6 @@ use glib::ToValue;
 
 use libc::c_char;
 
-use super::Foo as FooWrapper;
 use crate::nameable::*;
 
 pub mod ffi {
@@ -58,7 +57,7 @@ pub struct Foo {
 impl ObjectSubclass for Foo {
     const NAME: &'static str = "ExFoo";
     type ParentType = glib::Object;
-    type Type = FooWrapper;
+    type Type = super::Foo;
     type Class = FooClass;
     type Interfaces = (Nameable,);
 
@@ -146,7 +145,7 @@ impl Foo {
     //
     // Safe implementations. These take the wrapper type, and not &Self, as first argument
     //
-    fn increment(&self, this: &FooWrapper, inc: i32) -> i32 {
+    fn increment(&self, this: &super::Foo, inc: i32) -> i32 {
         let mut val = self.counter.borrow_mut();
 
         *val += inc;
@@ -156,20 +155,20 @@ impl Foo {
         *val
     }
 
-    fn incremented(&self, _this: &FooWrapper, _val: i32, _inc: i32) {
+    fn incremented(&self, _this: &super::Foo, _val: i32, _inc: i32) {
         // Could do something here. Default/class handler of the "incremented"
         // signal that could be overriden by subclasses
     }
 
-    fn get_counter(&self, _this: &FooWrapper) -> i32 {
+    fn get_counter(&self, _this: &super::Foo) -> i32 {
         *self.counter.borrow()
     }
 
-    fn get_name(&self, _this: &FooWrapper) -> Option<String> {
+    fn get_name(&self, _this: &super::Foo) -> Option<String> {
         self.name.borrow().clone()
     }
 
-    fn set_name(&self, _this: &FooWrapper, name: Option<String>) {
+    fn set_name(&self, _this: &super::Foo, name: Option<String>) {
         *self.name.borrow_mut() = name;
     }
 }
@@ -214,7 +213,7 @@ pub unsafe extern "C" fn ex_foo_get_name(this: *mut ffi::Foo) -> *mut c_char {
 /// Must be a valid C string, 0-terminated.
 #[no_mangle]
 pub unsafe extern "C" fn ex_foo_new(name: *const c_char) -> *mut ffi::Foo {
-    let obj = glib::Object::new::<FooWrapper>(&[("name", &*glib::GString::from_glib_borrow(name))])
+    let obj = glib::Object::new::<super::Foo>(&[("name", &*glib::GString::from_glib_borrow(name))])
         .unwrap();
     obj.to_glib_full()
 }
