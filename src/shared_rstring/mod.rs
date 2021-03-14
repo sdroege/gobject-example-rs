@@ -10,6 +10,10 @@ pub mod imp {
 
 use glib::translate::*;
 
+// We use a Boxed with copy/free since imp::ref() returns a new Box* to hold an
+// Arc clone and handle refcounting.
+//
+// TODO: turn into a Shared and do the refcounting ourself.
 glib::wrapper! {
     #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
     pub struct SharedRString(Boxed<imp::SharedRString>);
