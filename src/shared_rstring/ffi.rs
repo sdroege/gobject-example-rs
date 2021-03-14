@@ -1,5 +1,5 @@
-use glib_ffi;
-use gobject_ffi;
+use glib::ffi;
+use glib::gobject_ffi;
 use libc::{c_char, c_void};
 
 // Opaque struct
@@ -7,7 +7,7 @@ use libc::{c_char, c_void};
 pub struct SharedRString(c_void);
 
 extern "C" {
-    pub fn ex_shared_rstring_get_type() -> glib_ffi::GType;
+    pub fn ex_shared_rstring_get_type() -> glib::ffi::GType;
 
     pub fn ex_shared_rstring_new(s: *const c_char) -> *mut SharedRString;
     pub fn ex_shared_rstring_ref(shared_rstring: *const SharedRString) -> *mut SharedRString;

@@ -1,5 +1,3 @@
-use glib_ffi;
-
 use std::sync::Arc;
 
 use glib::subclass::prelude::*;
@@ -59,6 +57,6 @@ pub unsafe extern "C" fn ex_shared_rstring_get(
 
 // GObject glue
 #[no_mangle]
-pub unsafe extern "C" fn ex_shared_rstring_get_type() -> glib_ffi::GType {
+pub unsafe extern "C" fn ex_shared_rstring_get_type() -> glib::ffi::GType {
     SharedRString::get_type().to_glib()
 }

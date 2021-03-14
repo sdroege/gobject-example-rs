@@ -1,5 +1,3 @@
-use glib_ffi;
-
 use std::cell::RefCell;
 
 use glib;
@@ -124,6 +122,6 @@ pub unsafe extern "C" fn ex_bar_new(name: *const c_char) -> *mut ffi::Bar {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn ex_bar_get_type() -> glib_ffi::GType {
+pub unsafe extern "C" fn ex_bar_get_type() -> glib::ffi::GType {
     Bar::get_type().to_glib()
 }

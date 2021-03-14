@@ -1,5 +1,3 @@
-use glib_ffi;
-
 use glib::subclass::prelude::*;
 use glib::translate::{from_glib_none, ToGlib, ToGlibPtr};
 
@@ -60,6 +58,6 @@ pub unsafe extern "C" fn ex_rstring_set(rstring: *mut RString, s: *const c_char)
 
 // GObject glue
 #[no_mangle]
-pub unsafe extern "C" fn ex_rstring_get_type() -> glib_ffi::GType {
+pub unsafe extern "C" fn ex_rstring_get_type() -> glib::ffi::GType {
     RString::get_type().to_glib()
 }
