@@ -13,7 +13,8 @@ use glib::ToValue;
 
 use libc::c_char;
 
-use foo::Foo as FooWrapper;
+use super::Foo as FooWrapper;
+use crate::nameable::*;
 
 pub mod ffi {
     pub type Foo = <super::Foo as super::ObjectSubclass>::Instance;
@@ -63,7 +64,7 @@ impl ObjectSubclass for Foo {
     type ParentType = glib::Object;
     type Type = FooWrapper;
     type Class = FooClass;
-    type Interfaces = (super::nameable::Nameable,);
+    type Interfaces = (Nameable,);
 
     fn class_init(klass: &mut Self::Class) {
         klass.increment = Some(increment_default_trampoline);
@@ -146,7 +147,7 @@ impl ObjectImpl for Foo {
     }
 }
 
-impl super::nameable::NameableImpl for Foo {
+impl NameableImpl for Foo {
     fn get_name(&self, nameable: &Self::Type) -> Option<String> {
         self.get_name(nameable.dynamic_cast_ref().unwrap())
     }

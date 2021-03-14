@@ -5,7 +5,7 @@ pub mod imp;
 mod ffi;
 #[cfg(feature = "bindings")]
 pub mod imp {
-    pub use rstring::ffi::*;
+    pub use super::ffi::*;
 }
 
 use glib::translate::*;

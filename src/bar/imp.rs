@@ -9,8 +9,8 @@ use glib::translate::*;
 
 use libc::c_char;
 
-use bar::Bar as BarWrapper;
-use foo;
+use super::Bar as BarWrapper;
+use crate::foo::*;
 
 pub mod ffi {
     pub type Bar = <super::Bar as super::ObjectSubclass>::Instance;
@@ -29,7 +29,7 @@ pub struct Bar {
 #[glib::object_subclass]
 impl ObjectSubclass for Bar {
     const NAME: &'static str = "ExBar";
-    type ParentType = foo::Foo;
+    type ParentType = Foo;
     type Type = BarWrapper;
 
     fn new() -> Self {
@@ -81,8 +81,8 @@ impl ObjectImpl for Bar {
     }
 }
 
-impl foo::FooImpl for Bar {
-    fn increment(&self, obj: &foo::Foo, inc: i32) -> i32 {
+impl FooImpl for Bar {
+    fn increment(&self, obj: &Foo, inc: i32) -> i32 {
         self.parent_increment(obj, 2 * inc)
     }
 }
