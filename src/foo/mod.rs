@@ -102,7 +102,11 @@ unsafe extern "C" fn connect_incremented_trampoline<P, F: Fn(&P, i32, i32) + 'st
     P: IsA<Foo>,
 {
     let f: &F = &*(f as *const F);
-    f(&*Foo::from_glib_borrow(this).unsafe_cast_ref::<P>(), val, inc)
+    f(
+        &*Foo::from_glib_borrow(this).unsafe_cast_ref::<P>(),
+        val,
+        inc,
+    )
 }
 
 pub trait FooImpl: ObjectImpl + 'static {

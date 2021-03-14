@@ -82,28 +82,26 @@ impl ObjectImpl for Foo {
     fn signals() -> &'static [glib::subclass::Signal] {
         use once_cell::sync::Lazy;
         static SIGNALS: Lazy<Vec<glib::subclass::Signal>> = Lazy::new(|| {
-            vec![
-                glib::subclass::Signal::builder(
-                    "incremented",
-                    &[i32::static_type().into(), i32::static_type().into()],
-                    glib::Type::UNIT.into(),
-                )
-                .class_handler(|_, args| {
-                    let obj = args[0].get::<glib::Object>().unwrap().unwrap();
-                    let val = args[1].get::<i32>().unwrap().unwrap();
-                    let inc = args[2].get::<i32>().unwrap().unwrap();
+            vec![glib::subclass::Signal::builder(
+                "incremented",
+                &[i32::static_type().into(), i32::static_type().into()],
+                glib::Type::UNIT.into(),
+            )
+            .class_handler(|_, args| {
+                let obj = args[0].get::<glib::Object>().unwrap().unwrap();
+                let val = args[1].get::<i32>().unwrap().unwrap();
+                let inc = args[2].get::<i32>().unwrap().unwrap();
 
-                    unsafe {
-                        let klass = &*(obj.get_object_class() as *const _ as *const FooClass);
-                        if let Some(ref func) = klass.incremented {
-                            func(obj.as_ptr() as *mut ffi::Foo, val, inc);
-                        }
+                unsafe {
+                    let klass = &*(obj.get_object_class() as *const _ as *const FooClass);
+                    if let Some(ref func) = klass.incremented {
+                        func(obj.as_ptr() as *mut ffi::Foo, val, inc);
                     }
+                }
 
-                    None
-                })
-                .build()
-            ]
+                None
+            })
+            .build()]
         });
 
         SIGNALS.as_ref()
@@ -112,21 +110,25 @@ impl ObjectImpl for Foo {
     fn properties() -> &'static [glib::ParamSpec] {
         use once_cell::sync::Lazy;
         static PROPERTIES: Lazy<Vec<glib::ParamSpec>> = Lazy::new(|| {
-            vec![
-                glib::ParamSpec::string(
-                    "name",
-                    "Name",
-                    "Name of this object",
-                    None,
-                    glib::ParamFlags::READWRITE,
-                ),
-            ]
+            vec![glib::ParamSpec::string(
+                "name",
+                "Name",
+                "Name of this object",
+                None,
+                glib::ParamFlags::READWRITE,
+            )]
         });
 
         PROPERTIES.as_ref()
     }
 
-    fn set_property(&self, obj: &Self::Type, _id: usize, value: &glib::Value, pspec: &glib::ParamSpec) {
+    fn set_property(
+        &self,
+        obj: &Self::Type,
+        _id: usize,
+        value: &glib::Value,
+        pspec: &glib::ParamSpec,
+    ) {
         match pspec.get_name() {
             "name" => {
                 let name = value.get().unwrap();
@@ -138,9 +140,7 @@ impl ObjectImpl for Foo {
 
     fn get_property(&self, obj: &Self::Type, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
         match pspec.get_name() {
-            "name" => {
-                self.get_name(obj.downcast_ref().unwrap()).to_value()
-            }
+            "name" => self.get_name(obj.downcast_ref().unwrap()).to_value(),
             _ => unimplemented!(),
         }
     }
@@ -212,9 +212,8 @@ pub unsafe extern "C" fn ex_foo_get_name(this: *mut ffi::Foo) -> *mut c_char {
 // GObject glue
 #[no_mangle]
 pub unsafe extern "C" fn ex_foo_new(name: *const c_char) -> *mut ffi::Foo {
-    let obj = glib::Object::new::<FooWrapper>(
-        &[("name", &*glib::GString::from_glib_borrow(name))],
-    ).unwrap();
+    let obj = glib::Object::new::<FooWrapper>(&[("name", &*glib::GString::from_glib_borrow(name))])
+        .unwrap();
     obj.to_glib_full()
 }
 
