@@ -75,6 +75,21 @@ impl<O: IsA<Foo>> FooExt for O {
     }
 
     fn connect_incremented<F: Fn(&Self, i32, i32) + 'static>(&self, f: F) -> SignalHandlerId {
+        unsafe extern "C" fn connect_incremented_trampoline<P, F: Fn(&P, i32, i32) + 'static>(
+            this: *mut ffi::Foo,
+            val: i32,
+            inc: i32,
+            f: glib::ffi::gpointer,
+        ) where
+            P: IsA<Foo>,
+        {
+            let f = &*(f as *const F);
+            f(
+                &*Foo::from_glib_borrow(this).unsafe_cast_ref::<P>(),
+                val,
+                inc,
+            )
+        }
         unsafe {
             let f: Box<F> = Box::new(f);
             connect_raw(
@@ -87,22 +102,6 @@ impl<O: IsA<Foo>> FooExt for O {
             )
         }
     }
-}
-
-unsafe extern "C" fn connect_incremented_trampoline<P, F: Fn(&P, i32, i32) + 'static>(
-    this: *mut ffi::Foo,
-    val: i32,
-    inc: i32,
-    f: glib::ffi::gpointer,
-) where
-    P: IsA<Foo>,
-{
-    let f: &F = &*(f as *const F);
-    f(
-        &*Foo::from_glib_borrow(this).unsafe_cast_ref::<P>(),
-        val,
-        inc,
-    )
 }
 
 pub trait FooImpl: ObjectImpl + 'static {

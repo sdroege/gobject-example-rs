@@ -70,6 +70,16 @@ impl Bar {
     }
 
     pub fn connect_property_number_notify<F: Fn(&Self) + 'static>(&self, f: F) -> SignalHandlerId {
+        unsafe extern "C" fn notify_number_trampoline<P, F: Fn(&P) + 'static>(
+            this: *mut ffi::Bar,
+            _param_spec: glib::ffi::gpointer,
+            f: glib::ffi::gpointer,
+        ) where
+            P: IsA<Bar>,
+        {
+            let f = &*(f as *const F);
+            f(&*Bar::from_glib_borrow(this).unsafe_cast_ref::<P>())
+        }
         unsafe {
             let f: Box<F> = Box::new(f);
             connect_raw(
@@ -80,17 +90,6 @@ impl Bar {
             )
         }
     }
-}
-
-unsafe extern "C" fn notify_number_trampoline<P, F: Fn(&P) + 'static>(
-    this: *mut ffi::Bar,
-    _param_spec: glib::ffi::gpointer,
-    f: glib::ffi::gpointer,
-) where
-    P: IsA<Bar>,
-{
-    let f: &F = &*(f as *const _);
-    f(&*Bar::from_glib_borrow(this).unsafe_cast_ref::<P>())
 }
 
 #[cfg(test)]
