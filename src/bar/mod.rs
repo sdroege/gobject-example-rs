@@ -22,12 +22,18 @@ use glib::translate::*;
 
 use std::mem;
 
-glib_wrapper! {
-    pub struct Bar(Object<imp::Bar, imp::BarClass, BarClass>) @extends foo::Foo, @implements nameable::Nameable;
+#[cfg(feature = "bindings")]
+glib::wrapper! {
+    pub struct Bar(Object<imp::Bar, imp::BarClass>) @extends foo::Foo, @implements nameable::Nameable;
 
     match fn {
         get_type => || imp::ex_bar_get_type(),
     }
+}
+
+#[cfg(not(feature = "bindings"))]
+glib::wrapper! {
+    pub struct Bar(ObjectSubclass<imp::BarPrivate>) @extends foo::Foo, @implements nameable::Nameable;
 }
 
 impl Bar {
@@ -52,7 +58,7 @@ impl Bar {
                 value.to_glib_none_mut().0,
             );
         }
-        value.get().unwrap()
+        value.get().unwrap().unwrap()
     }
 
     pub fn set_property_number(&self, num: f64) {
@@ -79,14 +85,14 @@ impl Bar {
 }
 
 unsafe extern "C" fn notify_number_trampoline<P, F: Fn(&P) + 'static>(
-    this: glib_ffi::gpointer,
+    this: *mut imp::Bar,
     _param_spec: glib_ffi::gpointer,
     f: glib_ffi::gpointer,
 ) where
     P: IsA<Bar>,
 {
     let f: &F = &*(f as *const _);
-    f(&Bar::from_glib_borrow(this as *mut imp::Bar).unsafe_cast())
+    f(&*Bar::from_glib_borrow(this).unsafe_cast_ref::<P>())
 }
 
 #[cfg(test)]

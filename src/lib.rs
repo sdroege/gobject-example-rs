@@ -6,7 +6,7 @@ extern crate glib;
 extern crate libc;
 extern crate once_cell;
 
-//pub mod bar;
+pub mod bar;
 pub mod foo;
 pub mod nameable;
 pub mod rstring;
