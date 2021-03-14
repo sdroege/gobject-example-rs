@@ -19,6 +19,7 @@ pub mod ffi {
 // We use RefCells here for each field as GObject conceptually uses interior mutability everywhere.
 // If this was to be used from multiple threads, these would have to be mutexes or otherwise
 // Sync+Send
+#[derive(Debug, Default)]
 pub struct Bar {
     number: RefCell<f64>,
 }
@@ -28,12 +29,6 @@ impl ObjectSubclass for Bar {
     const NAME: &'static str = "ExBar";
     type ParentType = Foo;
     type Type = BarWrapper;
-
-    fn new() -> Self {
-        Self {
-            number: RefCell::new(0.0),
-        }
-    }
 }
 
 impl ObjectImpl for Bar {
