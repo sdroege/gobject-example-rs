@@ -1,5 +1,7 @@
 #[cfg(not(feature = "bindings"))]
 pub mod imp;
+#[cfg(not(feature = "bindings"))]
+use self::imp::ffi;
 
 #[cfg(feature = "bindings")]
 mod ffi;
@@ -32,7 +34,7 @@ glib::wrapper! {
 
 #[cfg(not(feature = "bindings"))]
 glib::wrapper! {
-    pub struct Foo(ObjectSubclass<imp::FooPrivate>) @implements nameable::Nameable;
+    pub struct Foo(ObjectSubclass<imp::Foo>) @implements nameable::Nameable;
 }
 
 impl Foo {
@@ -92,7 +94,7 @@ impl<O: IsA<Foo>> FooExt for O {
 }
 
 unsafe extern "C" fn connect_incremented_trampoline<P, F: Fn(&P, i32, i32) + 'static>(
-    this: *mut imp::Foo,
+    this: *mut ffi::Foo,
     val: i32,
     inc: i32,
     f: glib_ffi::gpointer,
@@ -149,7 +151,7 @@ unsafe impl<T: FooImpl> IsSubclassable<T> for Foo {
 }
 
 // Virtual method default implementation trampolines
-unsafe extern "C" fn increment_trampoline<T: ObjectSubclass>(this: *mut imp::Foo, inc: i32) -> i32
+unsafe extern "C" fn increment_trampoline<T: ObjectSubclass>(this: *mut ffi::Foo, inc: i32) -> i32
 where
     T: FooImpl,
 {
@@ -159,7 +161,7 @@ where
 }
 
 unsafe extern "C" fn incremented_trampoline<T: ObjectSubclass>(
-    this: *mut imp::Foo,
+    this: *mut ffi::Foo,
     val: i32,
     inc: i32,
 ) where
