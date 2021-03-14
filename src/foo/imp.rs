@@ -48,6 +48,7 @@ impl ops::DerefMut for FooClass {
 // We use RefCells here for each field as GObject conceptually uses interior mutability everywhere.
 // If this was to be used from multiple threads, these would have to be mutexes or otherwise
 // Sync+Send
+#[derive(Debug, Default)]
 pub struct Foo {
     name: RefCell<Option<String>>,
     counter: RefCell<i32>,
@@ -64,13 +65,6 @@ impl ObjectSubclass for Foo {
     fn class_init(klass: &mut Self::Class) {
         klass.increment = Some(increment_default_trampoline);
         klass.incremented = Some(incremented_default_trampoline);
-    }
-
-    fn new() -> Self {
-        Self {
-            name: RefCell::new(None),
-            counter: RefCell::new(0),
-        }
     }
 }
 
