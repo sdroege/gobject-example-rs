@@ -122,7 +122,7 @@ impl ObjectImpl for Foo {
         match pspec.get_name() {
             "name" => {
                 let name = value.get().unwrap();
-                self.set_name(obj.downcast_ref().unwrap(), name);
+                self.set_name(obj, name);
             }
             _ => unimplemented!(),
         }
@@ -130,7 +130,7 @@ impl ObjectImpl for Foo {
 
     fn get_property(&self, obj: &Self::Type, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
         match pspec.get_name() {
-            "name" => self.get_name(obj.downcast_ref().unwrap()).to_value(),
+            "name" => self.get_name(obj).to_value(),
             _ => unimplemented!(),
         }
     }

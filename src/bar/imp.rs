@@ -59,7 +59,7 @@ impl ObjectImpl for Bar {
         match pspec.get_name() {
             "number" => {
                 let number = value.get().unwrap().unwrap();
-                self.set_number(obj.downcast_ref().unwrap(), number);
+                self.set_number(obj, number);
             }
             _ => unimplemented!(),
         }
@@ -67,7 +67,7 @@ impl ObjectImpl for Bar {
 
     fn get_property(&self, obj: &Self::Type, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
         match pspec.get_name() {
-            "number" => self.get_number(obj.downcast_ref().unwrap()).to_value(),
+            "number" => self.get_number(obj).to_value(),
             _ => unimplemented!(),
         }
     }
