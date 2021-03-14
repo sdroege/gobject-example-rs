@@ -7,7 +7,6 @@ use std::cell::RefCell;
 
 use glib;
 use glib::prelude::*;
-use glib::subclass;
 use glib::subclass::prelude::*;
 use glib::translate::*;
 use glib::ToValue;

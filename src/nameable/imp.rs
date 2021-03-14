@@ -4,7 +4,6 @@ use gobject_ffi;
 use std::ptr;
 
 use glib;
-use glib::subclass;
 use glib::subclass::prelude::*;
 use glib::translate::{from_glib_borrow, FromGlibPtrBorrow, ToGlib, ToGlibPtr};
 
