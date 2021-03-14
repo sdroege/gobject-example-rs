@@ -16,14 +16,8 @@ use libc::c_char;
 
 use foo::Foo as FooWrapper;
 
-// Instance struct
-#[repr(C)]
-pub struct Foo {
-    pub parent: gobject_ffi::GObject,
-}
-
-unsafe impl InstanceStruct for Foo {
-    type Type = FooPrivate;
+pub mod ffi {
+    pub type Foo = <super::Foo as super::ObjectSubclass>::Instance;
 }
 
 // Class struct aka "vtable"
@@ -32,12 +26,12 @@ unsafe impl InstanceStruct for Foo {
 #[repr(C)]
 pub struct FooClass {
     pub parent_class: gobject_ffi::GObjectClass,
-    pub increment: Option<unsafe extern "C" fn(*mut Foo, inc: i32) -> i32>,
-    pub incremented: Option<unsafe extern "C" fn(*mut Foo, val: i32, inc: i32)>,
+    pub increment: Option<unsafe extern "C" fn(*mut ffi::Foo, inc: i32) -> i32>,
+    pub incremented: Option<unsafe extern "C" fn(*mut ffi::Foo, val: i32, inc: i32)>,
 }
 
 unsafe impl ClassStruct for FooClass {
-    type Type = FooPrivate;
+    type Type = Foo;
 }
 
 impl ops::Deref for FooClass {
@@ -59,16 +53,15 @@ impl ops::DerefMut for FooClass {
 // We use RefCells here for each field as GObject conceptually uses interior mutability everywhere.
 // If this was to be used from multiple threads, these would have to be mutexes or otherwise
 // Sync+Send
-pub struct FooPrivate {
+pub struct Foo {
     name: RefCell<Option<String>>,
     counter: RefCell<i32>,
 }
 
 #[glib::object_subclass]
-impl ObjectSubclass for FooPrivate {
+impl ObjectSubclass for Foo {
     const NAME: &'static str = "ExFoo";
     type ParentType = glib::Object;
-    type Instance = Foo;
     type Type = FooWrapper;
     type Class = FooClass;
     type Interfaces = (super::nameable::Nameable,);
@@ -86,7 +79,7 @@ impl ObjectSubclass for FooPrivate {
     }
 }
 
-impl ObjectImpl for FooPrivate {
+impl ObjectImpl for Foo {
     fn signals() -> &'static [glib::subclass::Signal] {
         use once_cell::sync::Lazy;
         static SIGNALS: Lazy<Vec<glib::subclass::Signal>> = Lazy::new(|| {
@@ -104,7 +97,7 @@ impl ObjectImpl for FooPrivate {
                     unsafe {
                         let klass = &*(obj.get_object_class() as *const _ as *const FooClass);
                         if let Some(ref func) = klass.incremented {
-                            func(obj.as_ptr() as *mut Foo, val, inc);
+                            func(obj.as_ptr() as *mut ffi::Foo, val, inc);
                         }
                     }
 
@@ -154,13 +147,13 @@ impl ObjectImpl for FooPrivate {
     }
 }
 
-impl super::nameable::NameableImpl for FooPrivate {
+impl super::nameable::NameableImpl for Foo {
     fn get_name(&self, nameable: &Self::Type) -> Option<String> {
         self.get_name(nameable.dynamic_cast_ref().unwrap())
     }
 }
 
-impl FooPrivate {
+impl Foo {
     //
     // Safe implementations. These take the wrapper type, and not &Self, as first argument
     //
@@ -198,7 +191,7 @@ impl FooPrivate {
 
 // Virtual method callers
 #[no_mangle]
-pub unsafe extern "C" fn ex_foo_increment(this: *mut Foo, inc: i32) -> i32 {
+pub unsafe extern "C" fn ex_foo_increment(this: *mut ffi::Foo, inc: i32) -> i32 {
     let klass = (*this).get_class();
 
     (klass.increment.as_ref().unwrap())(this, inc)
@@ -206,20 +199,20 @@ pub unsafe extern "C" fn ex_foo_increment(this: *mut Foo, inc: i32) -> i32 {
 
 // Trampolines to safe Rust implementations
 #[no_mangle]
-pub unsafe extern "C" fn ex_foo_get_counter(this: *mut Foo) -> i32 {
+pub unsafe extern "C" fn ex_foo_get_counter(this: *mut ffi::Foo) -> i32 {
     let imp = (*this).get_impl();
     imp.get_counter(&from_glib_borrow(this))
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn ex_foo_get_name(this: *mut Foo) -> *mut c_char {
+pub unsafe extern "C" fn ex_foo_get_name(this: *mut ffi::Foo) -> *mut c_char {
     let imp = (*this).get_impl();
     imp.get_name(&from_glib_borrow(this)).to_glib_full()
 }
 
 // GObject glue
 #[no_mangle]
-pub unsafe extern "C" fn ex_foo_new(name: *const c_char) -> *mut Foo {
+pub unsafe extern "C" fn ex_foo_new(name: *const c_char) -> *mut ffi::Foo {
     let obj = glib::Object::new::<FooWrapper>(
         &[("name", &*glib::GString::from_glib_borrow(name))],
     ).unwrap();
@@ -228,16 +221,16 @@ pub unsafe extern "C" fn ex_foo_new(name: *const c_char) -> *mut Foo {
 
 #[no_mangle]
 pub unsafe extern "C" fn ex_foo_get_type() -> glib_ffi::GType {
-    FooPrivate::get_type().to_glib()
+    Foo::get_type().to_glib()
 }
 
 // Virtual method default implementation trampolines
-unsafe extern "C" fn increment_default_trampoline(this: *mut Foo, inc: i32) -> i32 {
+unsafe extern "C" fn increment_default_trampoline(this: *mut ffi::Foo, inc: i32) -> i32 {
     let imp = (*this).get_impl();
     imp.increment(&from_glib_borrow(this), inc)
 }
 
-unsafe extern "C" fn incremented_default_trampoline(this: *mut Foo, val: i32, inc: i32) {
+unsafe extern "C" fn incremented_default_trampoline(this: *mut ffi::Foo, val: i32, inc: i32) {
     let imp = (*this).get_impl();
     imp.incremented(&from_glib_borrow(this), val, inc);
 }
