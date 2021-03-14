@@ -21,6 +21,7 @@ use std::mem;
 
 use nameable;
 
+#[cfg(feature = "bindings")]
 glib::wrapper! {
     pub struct Foo(Object<imp::Foo, imp::FooClass>) @implements nameable::Nameable;
 
@@ -30,8 +31,8 @@ glib::wrapper! {
 }
 
 #[cfg(not(feature = "bindings"))]
-unsafe impl glib::object::ObjectSubclassIs for Foo {
-    type Subclass = imp::FooPrivate;
+glib::wrapper! {
+    pub struct Foo(ObjectSubclass<imp::FooPrivate>) @implements nameable::Nameable;
 }
 
 impl Foo {
