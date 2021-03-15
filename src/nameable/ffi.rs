@@ -1,5 +1,3 @@
-use glib::ffi;
-use glib::gobject_ffi;
 use libc::{c_char, c_void};
 
 #[repr(C)]
