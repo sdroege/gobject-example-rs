@@ -3,6 +3,8 @@
 
 #include <glib-object.h>
 
+#include "foo.h"
+
 G_BEGIN_DECLS
 
 #define EX_TYPE_BAR            (ex_bar_get_type())
@@ -16,11 +18,11 @@ typedef struct _ExBar      ExBar;
 typedef struct _ExBarClass ExBarClass;
 
 struct _ExBar {
-  GObject parent;
+  ExFoo parent;
 };
 
 struct _ExBarClass {
-  GObjectClass parent_class;
+  ExFooClass parent_class;
 };
 
 GType   ex_bar_get_type    (void);
