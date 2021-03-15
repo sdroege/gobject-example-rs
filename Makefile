@@ -24,7 +24,11 @@ RUST_SOURCES = \
 	src/shared_rstring/imp.rs \
 	src/shared_rstring/mod.rs
 
-all: Ex-0.1.gir Ex-0.1.typelib
+all: Ex-0.1.gir Ex-0.1.typelib Ex-0.1.vapi
+
+export PKG_CONFIG_PATH=$(PWD)
+export GI_TYPELIB_PATH=$(PWD)
+export LD_LIBRARY_PATH=$(PWD)/target/debug
 
 target/debug/libgobject_example.so: $(RUST_SOURCES)
 	cargo build
@@ -43,16 +47,31 @@ Ex-0.1.typelib: Ex-0.1.gir
 		--includedir=include \
 		$< -o $@
 
+Ex-0.1.vapi: Ex-0.1.gir
+	vapigen \
+		--library Ex-0.1 \
+		$<
+
 clean:
 	rm -f Ex-0.1.typelib
 	rm -f Ex-0.1.gir
+	rm -f Ex-0.1.vapi test-vala
 	cargo clean
 
 run-python: Ex-0.1.typelib
-	GI_TYPELIB_PATH=$(PWD) LD_LIBRARY_PATH=$(PWD)/target/debug python3 test.py
+	python3 test.py
 
 run-gjs: Ex-0.1.typelib
-	GI_TYPELIB_PATH=$(PWD) LD_LIBRARY_PATH=$(PWD)/target/debug gjs test.js
+	gjs test.js
+
+test-vala: test.vala Ex-0.1.vapi
+	valac -v \
+		--vapidir=$(PWD) \
+		--pkg=Ex-0.1 \
+		$< -o $@
+
+run-vala: test-vala
+	./test-vala
 
 check:
 	cargo test
