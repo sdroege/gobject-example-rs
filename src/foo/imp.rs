@@ -185,7 +185,7 @@ impl Foo {
 pub unsafe extern "C" fn ex_foo_increment(this: *mut ffi::Foo, inc: i32) -> i32 {
     let klass = (*this).get_class();
 
-    (klass.increment.as_ref().unwrap())(this, inc)
+    (klass.increment.unwrap())(this, inc)
 }
 
 // Trampolines to safe Rust implementations
