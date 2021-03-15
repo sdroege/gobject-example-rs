@@ -56,6 +56,7 @@ clean:
 	rm -f Ex-0.1.typelib
 	rm -f Ex-0.1.gir
 	rm -f Ex-0.1.vapi test-vala
+	rm -rf test-c
 	cargo clean
 
 run-python: Ex-0.1.typelib
@@ -72,6 +73,12 @@ test-vala: test.vala Ex-0.1.vapi
 
 run-vala: test-vala
 	./test-vala
+
+test-c: test.c target/debug/libgobject_example.so $(HEADERS)
+	$(CC) `pkg-config --cflags --libs Ex-0.1` $< -o $@
+
+run-c: test-c
+	./test-c
 
 check:
 	cargo test
