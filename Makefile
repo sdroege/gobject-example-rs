@@ -1,10 +1,4 @@
-HEADERS = \
-	include/ex/ex.h \
-	include/ex/foo.h \
-	include/ex/bar.h \
-	include/ex/nameable.h \
-	include/ex/rstring.h \
-	include/ex/shared-rstring.h \
+HEADER = include/ex/ex.h
 
 RUST_SOURCES = \
 	src/lib.rs \
@@ -33,14 +27,21 @@ export LD_LIBRARY_PATH=$(PWD)/target/debug
 target/debug/libgobject_example.so: $(RUST_SOURCES)
 	cargo build
 
-Ex-0.1.gir: target/debug/libgobject_example.so $(HEADERS)
+gbindgen:
+	cargo build --all-features --manifest-path=cbindgen/Cargo.toml
+	cp cbindgen/target/debug/gbindgen .
+
+$(HEADER): gbindgen $(RUST_SOURCES)
+	./gbindgen -o $(HEADER)
+
+Ex-0.1.gir: target/debug/libgobject_example.so $(HEADER)
 	g-ir-scanner -v --warn-all \
 		--namespace Ex --nsversion=0.1 \
 		-Iinclude --c-include "ex/ex.h" \
 		--library=gobject_example --library-path=target/debug \
 		--include=GObject-2.0 -pkg gobject-2.0 \
 		--output $@ \
-		$(HEADERS)
+		$(HEADER)
 
 Ex-0.1.typelib: Ex-0.1.gir
 	g-ir-compiler \
@@ -74,7 +75,7 @@ test-vala: test.vala Ex-0.1.vapi
 run-vala: test-vala
 	./test-vala
 
-test-c: test.c target/debug/libgobject_example.so $(HEADERS)
+test-c: test.c target/debug/libgobject_example.so $(HEADER)
 	$(CC) `pkg-config --cflags --libs Ex-0.1` $< -o $@
 
 run-c: test-c

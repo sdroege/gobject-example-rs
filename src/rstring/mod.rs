@@ -1,6 +1,7 @@
 #[cfg(not(feature = "bindings"))]
 pub mod imp;
 
+/// cbindgen:ignore
 #[cfg(feature = "bindings")]
 mod ffi;
 #[cfg(feature = "bindings")]

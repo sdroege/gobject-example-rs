@@ -3,6 +3,7 @@ pub mod imp;
 #[cfg(not(feature = "bindings"))]
 use self::imp::ffi;
 
+/// cbindgen:ignore
 #[cfg(feature = "bindings")]
 mod ffi;
 #[cfg(feature = "bindings")]
