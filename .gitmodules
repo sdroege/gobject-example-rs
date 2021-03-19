@@ -1,0 +1,4 @@
+[submodule "cbindgen"]
+	path = cbindgen
+	url = https://github.com/elmarco/cbindgen.git
+	branch = gbindgen
