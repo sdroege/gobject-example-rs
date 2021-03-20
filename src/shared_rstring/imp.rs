@@ -1,10 +1,5 @@
 use std::sync::Arc;
 
-use glib::subclass::prelude::*;
-use glib::translate::{from_glib_none, ToGlib, ToGlibPtr};
-
-use libc::c_char;
-
 // No #[repr(C)] here as we export it as an opaque struct
 // If it was not opaque, it must be #[repr(C)]
 #[derive(Clone, Debug, PartialEq, Eq, glib::GBoxed)]
@@ -22,53 +17,57 @@ impl SharedRString {
     }
 }
 
-//
-// Public C functions below
-//
-/// # Safety
-///
-/// Must be a valid C string, 0-terminated.
-#[no_mangle]
-pub unsafe extern "C" fn ex_shared_rstring_new(s: *const c_char) -> *mut SharedRString {
-    let s = Box::new(SharedRString::new(from_glib_none(s)));
-    Box::into_raw(s) as *mut _
-}
+pub(crate) mod ffi {
+    use glib::translate::{from_glib_none, ToGlib, ToGlibPtr};
+    use libc::c_char;
 
-/// # Safety
-///
-/// Must be a valid SharedRString pointer.
-#[no_mangle]
-pub unsafe extern "C" fn ex_shared_rstring_ref(
-    shared_rstring: *const SharedRString,
-) -> *mut SharedRString {
-    let shared_rstring = &*shared_rstring;
-    let s = Box::new(shared_rstring.clone());
+    pub type ExSharedRString = super::SharedRString;
 
-    Box::into_raw(s) as *mut _
-}
+    /// # Safety
+    ///
+    /// Must be a valid C string, 0-terminated.
+    #[no_mangle]
+    pub unsafe extern "C" fn ex_shared_rstring_new(s: *const c_char) -> *mut ExSharedRString {
+        let s = Box::new(super::SharedRString::new(from_glib_none(s)));
+        Box::into_raw(s) as *mut _
+    }
 
-/// # Safety
-///
-/// Must be a valid SharedRString pointer.
-#[no_mangle]
-pub unsafe extern "C" fn ex_shared_rstring_unref(shared_rstring: *mut SharedRString) {
-    let _ = Box::from_raw(shared_rstring);
-}
+    /// # Safety
+    ///
+    /// Must be a valid SharedRString pointer.
+    #[no_mangle]
+    pub unsafe extern "C" fn ex_shared_rstring_ref(
+        shared_rstring: *const ExSharedRString,
+    ) -> *mut ExSharedRString {
+        let shared_rstring = &*shared_rstring;
+        let s = Box::new(shared_rstring.clone());
 
-/// # Safety
-///
-/// Must be a valid SharedRString pointer.
-#[no_mangle]
-pub unsafe extern "C" fn ex_shared_rstring_get(
-    shared_rstring: *const SharedRString,
-) -> *mut c_char {
-    let shared_rstring = &*shared_rstring;
-    // FIXME: This could borrow the &str in theory!
-    shared_rstring.get().to_glib_full()
-}
+        Box::into_raw(s) as *mut _
+    }
 
-// GObject glue
-#[no_mangle]
-pub extern "C" fn ex_shared_rstring_get_type() -> glib::ffi::GType {
-    SharedRString::get_type().to_glib()
+    /// # Safety
+    ///
+    /// Must be a valid SharedRString pointer.
+    #[no_mangle]
+    pub unsafe extern "C" fn ex_shared_rstring_unref(shared_rstring: *mut ExSharedRString) {
+        let _ = Box::from_raw(shared_rstring);
+    }
+
+    /// # Safety
+    ///
+    /// Must be a valid SharedRString pointer.
+    #[no_mangle]
+    pub unsafe extern "C" fn ex_shared_rstring_get(
+        shared_rstring: *const ExSharedRString,
+    ) -> *mut c_char {
+        let shared_rstring = &*shared_rstring;
+        // FIXME: This could borrow the &str in theory!
+        shared_rstring.get().to_glib_full()
+    }
+
+    // GObject glue
+    #[no_mangle]
+    pub extern "C" fn ex_shared_rstring_get_type() -> glib::ffi::GType {
+        <super::SharedRString as glib::subclass::boxed::BoxedType>::get_type().to_glib()
+    }
 }
