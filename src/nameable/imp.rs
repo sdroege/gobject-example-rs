@@ -1,7 +1,5 @@
-use std::ptr;
-
 use glib::subclass::prelude::*;
-use glib::translate::{from_glib_borrow, FromGlibPtrBorrow, ToGlib, ToGlibPtr};
+use glib::translate::{from_glib_borrow, ToGlibPtr};
 
 use libc::{c_char, c_void};
 
@@ -49,21 +47,28 @@ impl NameableInterface {
     }
 }
 
-//
-// Public C functions below
-//
-#[no_mangle]
-pub extern "C" fn ex_nameable_get_type() -> glib::ffi::GType {
-    NameableInterface::get_type().to_glib()
-}
+pub(crate) mod ffi {
+    use glib::translate::ToGlib;
+    use libc::c_char;
+    use std::ptr;
 
-// Virtual method callers
-/// # Safety
-///
-/// Must be a Nameable interface.
-#[no_mangle]
-pub unsafe extern "C" fn ex_nameable_get_name(this: *mut Nameable) -> *mut c_char {
-    let wrapper = super::Nameable::from_glib_borrow(this);
-    let iface = NameableInterface::from_instance(&*wrapper);
-    iface.get_name.map(|f| f(this)).unwrap_or(ptr::null_mut())
+    pub type ExNameable = super::Nameable;
+    pub type ExNameableInterface = super::NameableInterface;
+
+    #[no_mangle]
+    pub extern "C" fn ex_nameable_get_type() -> glib::ffi::GType {
+        <super::NameableInterface as glib::subclass::interface::ObjectInterfaceType>::get_type()
+            .to_glib()
+    }
+
+    // Virtual method callers
+    /// # Safety
+    ///
+    /// Must be a Nameable interface.
+    #[no_mangle]
+    pub unsafe extern "C" fn ex_nameable_get_name(this: *mut ExNameable) -> *mut c_char {
+        let wrapper = super::super::from_glib_borrow::<_, super::super::Nameable>(this);
+        let iface = <super::NameableInterface as glib::subclass::interface::ObjectInterfaceExt>::from_instance(&*wrapper);
+        iface.get_name.map(|f| f(this)).unwrap_or(ptr::null_mut())
+    }
 }
