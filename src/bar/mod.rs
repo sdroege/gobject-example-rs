@@ -1,14 +1,10 @@
 #[cfg(not(feature = "bindings"))]
 pub mod imp;
 #[cfg(not(feature = "bindings"))]
-use self::imp::ffi;
+use imp::ffi;
 
 #[cfg(feature = "bindings")]
 mod ffi;
-#[cfg(feature = "bindings")]
-pub mod imp {
-    pub use super::ffi::*;
-}
 
 use glib::object::ObjectType;
 use glib::prelude::*;
@@ -22,10 +18,10 @@ use crate::nameable::Nameable;
 
 #[cfg(feature = "bindings")]
 glib::wrapper! {
-    pub struct Bar(Object<imp::Bar, imp::BarClass>) @extends Foo, @implements Nameable;
+    pub struct Bar(Object<ffi::ExBar, ffi::ExBarClass>) @extends Foo, @implements Nameable;
 
     match fn {
-        get_type => || imp::ex_bar_get_type(),
+        get_type => || ffi::ex_bar_get_type(),
     }
 }
 
@@ -36,15 +32,15 @@ glib::wrapper! {
 
 impl Bar {
     pub fn new(name: Option<&str>) -> Bar {
-        unsafe { from_glib_full(imp::ex_bar_new(name.to_glib_none().0)) }
+        unsafe { from_glib_full(ffi::ex_bar_new(name.to_glib_none().0)) }
     }
 
     pub fn set_number(&self, num: f64) {
-        unsafe { imp::ex_bar_set_number(self.to_glib_none().0, num) }
+        unsafe { ffi::ex_bar_set_number(self.to_glib_none().0, num) }
     }
 
     pub fn get_number(&self) -> f64 {
-        unsafe { imp::ex_bar_get_number(self.to_glib_none().0) }
+        unsafe { ffi::ex_bar_get_number(self.to_glib_none().0) }
     }
 
     pub fn get_property_number(&self) -> f64 {
@@ -71,7 +67,7 @@ impl Bar {
 
     pub fn connect_property_number_notify<F: Fn(&Self) + 'static>(&self, f: F) -> SignalHandlerId {
         unsafe extern "C" fn notify_number_trampoline<P, F: Fn(&P) + 'static>(
-            this: *mut ffi::Bar,
+            this: *mut ffi::ExBar,
             _param_spec: glib::ffi::gpointer,
             f: glib::ffi::gpointer,
         ) where

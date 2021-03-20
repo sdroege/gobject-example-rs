@@ -2,15 +2,8 @@ use std::cell::RefCell;
 
 use glib::prelude::*;
 use glib::subclass::prelude::*;
-use glib::translate::*;
-
-use libc::c_char;
 
 use crate::foo::*;
-
-pub mod ffi {
-    pub type Bar = <super::Bar as super::ObjectSubclass>::Instance;
-}
 
 // We could put our data into the Bar struct above but that's discouraged nowadays so let's just
 // keep it all in Bar
@@ -89,42 +82,46 @@ impl Bar {
     }
 }
 
-//
-// Public C functions below
-//
+pub(crate) mod ffi {
+    use glib::translate::*;
+    use libc::c_char;
 
-// Trampolines to safe Rust implementations
-//
-/// # Safety
-///
-/// Must be a BarInstance object.
-#[no_mangle]
-pub unsafe extern "C" fn ex_bar_get_number(this: *mut ffi::Bar) -> f64 {
-    let imp = (*this).get_impl();
-    imp.get_number(&from_glib_borrow(this))
-}
+    pub type ExBar = <super::Bar as super::ObjectSubclass>::Instance;
 
-/// # Safety
-///
-/// Must be a BarInstance object.
-#[no_mangle]
-pub unsafe extern "C" fn ex_bar_set_number(this: *mut ffi::Bar, num: f64) {
-    let imp = (*this).get_impl();
-    imp.set_number(&from_glib_borrow(this), num);
-}
+    /// # Safety
+    ///
+    /// Must be a BarInstance object.
+    #[no_mangle]
+    pub unsafe extern "C" fn ex_bar_get_number(this: *mut ExBar) -> f64 {
+        let imp = glib::subclass::types::InstanceStruct::get_impl(&*this);
+        imp.get_number(&from_glib_borrow(this))
+    }
 
-// GObject glue
-/// # Safety
-///
-/// Must be a valid C string, 0-terminated.
-#[no_mangle]
-pub unsafe extern "C" fn ex_bar_new(name: *const c_char) -> *mut ffi::Bar {
-    let obj = glib::Object::new::<super::Bar>(&[("name", &*glib::GString::from_glib_borrow(name))])
+    /// # Safety
+    ///
+    /// Must be a BarInstance object.
+    #[no_mangle]
+    pub unsafe extern "C" fn ex_bar_set_number(this: *mut ExBar, num: f64) {
+        let imp = glib::subclass::types::InstanceStruct::get_impl(&*this);
+        imp.set_number(&from_glib_borrow(this), num);
+    }
+
+    // GObject glue
+    /// # Safety
+    ///
+    /// Must be a valid C string, 0-terminated.
+    #[no_mangle]
+    pub unsafe extern "C" fn ex_bar_new(name: *const c_char) -> *mut ExBar {
+        let obj = glib::Object::new::<super::super::Bar>(&[(
+            "name",
+            &*glib::GString::from_glib_borrow(name),
+        )])
         .unwrap();
-    obj.to_glib_full()
-}
+        obj.to_glib_full()
+    }
 
-#[no_mangle]
-pub extern "C" fn ex_bar_get_type() -> glib::ffi::GType {
-    Bar::get_type().to_glib()
+    #[no_mangle]
+    pub extern "C" fn ex_bar_get_type() -> glib::ffi::GType {
+        <super::Bar as glib::subclass::types::ObjectSubclassType>::get_type().to_glib()
+    }
 }
