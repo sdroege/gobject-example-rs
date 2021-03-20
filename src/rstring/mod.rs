@@ -1,36 +1,34 @@
 #[cfg(not(feature = "bindings"))]
 pub mod imp;
+#[cfg(not(feature = "bindings"))]
+use imp::ffi;
 
 #[cfg(feature = "bindings")]
 mod ffi;
-#[cfg(feature = "bindings")]
-pub mod imp {
-    pub use super::ffi::*;
-}
 
 use glib::translate::*;
 
 glib::wrapper! {
-    pub struct RString(Boxed<imp::RString>);
+    pub struct RString(Boxed<ffi::ExRString>);
 
     match fn {
-        copy => |ptr| imp::ex_rstring_copy(ptr),
-        free => |ptr| imp::ex_rstring_free(ptr),
-        get_type => || imp::ex_rstring_get_type(),
+        copy => |ptr| ffi::ex_rstring_copy(ptr),
+        free => |ptr| ffi::ex_rstring_free(ptr),
+        get_type => || ffi::ex_rstring_get_type(),
     }
 }
 
 impl RString {
     pub fn new(s: Option<&str>) -> RString {
-        unsafe { from_glib_full(imp::ex_rstring_new(s.to_glib_none().0)) }
+        unsafe { from_glib_full(ffi::ex_rstring_new(s.to_glib_none().0)) }
     }
 
     pub fn get(&self) -> Option<String> {
-        unsafe { from_glib_full(imp::ex_rstring_get(self.to_glib_none().0)) }
+        unsafe { from_glib_full(ffi::ex_rstring_get(self.to_glib_none().0)) }
     }
 
     pub fn set(&mut self, s: Option<&str>) {
-        unsafe { imp::ex_rstring_set(self.to_glib_none_mut().0, s.to_glib_none().0) }
+        unsafe { ffi::ex_rstring_set(self.to_glib_none_mut().0, s.to_glib_none().0) }
     }
 }
 
