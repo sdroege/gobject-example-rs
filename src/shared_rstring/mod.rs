@@ -1,12 +1,10 @@
 #[cfg(not(feature = "bindings"))]
 pub mod imp;
+#[cfg(not(feature = "bindings"))]
+use imp::ffi;
 
 #[cfg(feature = "bindings")]
 mod ffi;
-#[cfg(feature = "bindings")]
-pub mod imp {
-    pub use super::ffi::*;
-}
 
 use glib::translate::*;
 
@@ -16,23 +14,23 @@ use glib::translate::*;
 // TODO: turn into a Shared and do the refcounting ourself.
 glib::wrapper! {
     #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    pub struct SharedRString(Boxed<imp::SharedRString>);
+    pub struct SharedRString(Boxed<ffi::ExSharedRString>);
 
     match fn {
-        copy => |ptr| imp::ex_shared_rstring_ref(ptr),
-        free => |ptr| imp::ex_shared_rstring_unref(ptr),
-        get_type => || imp::ex_shared_rstring_get_type(),
+        copy => |ptr| ffi::ex_shared_rstring_ref(ptr),
+        free => |ptr| ffi::ex_shared_rstring_unref(ptr),
+        get_type => || ffi::ex_shared_rstring_get_type(),
     }
 }
 
 impl SharedRString {
     pub fn new(s: Option<&str>) -> SharedRString {
-        unsafe { from_glib_full(imp::ex_shared_rstring_new(s.to_glib_none().0)) }
+        unsafe { from_glib_full(ffi::ex_shared_rstring_new(s.to_glib_none().0)) }
     }
 
     // FIXME: This could borrow the &str in theory!
     pub fn get(&self) -> Option<String> {
-        unsafe { from_glib_full(imp::ex_shared_rstring_get(self.to_glib_none().0)) }
+        unsafe { from_glib_full(ffi::ex_shared_rstring_get(self.to_glib_none().0)) }
     }
 }
 
