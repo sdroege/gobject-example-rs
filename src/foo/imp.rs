@@ -6,13 +6,7 @@ use glib::subclass::prelude::*;
 use glib::translate::*;
 use glib::ToValue;
 
-use libc::c_char;
-
 use crate::nameable::*;
-
-pub mod ffi {
-    pub type Foo = <super::Foo as super::ObjectSubclass>::Instance;
-}
 
 // Class struct aka "vtable"
 //
@@ -20,8 +14,8 @@ pub mod ffi {
 #[repr(C)]
 pub struct FooClass {
     pub parent_class: glib::gobject_ffi::GObjectClass,
-    pub increment: Option<unsafe extern "C" fn(*mut ffi::Foo, inc: i32) -> i32>,
-    pub incremented: Option<unsafe extern "C" fn(*mut ffi::Foo, val: i32, inc: i32)>,
+    pub increment: Option<unsafe extern "C" fn(*mut ffi::ExFoo, inc: i32) -> i32>,
+    pub incremented: Option<unsafe extern "C" fn(*mut ffi::ExFoo, val: i32, inc: i32)>,
 }
 
 unsafe impl ClassStruct for FooClass {
@@ -84,7 +78,7 @@ impl ObjectImpl for Foo {
                 unsafe {
                     let klass = &*(obj.get_object_class() as *const _ as *const FooClass);
                     if let Some(ref func) = klass.incremented {
-                        func(obj.as_ptr() as *mut ffi::Foo, val, inc);
+                        func(obj.as_ptr() as *mut ffi::ExFoo, val, inc);
                     }
                 }
 
@@ -173,63 +167,69 @@ impl Foo {
     }
 }
 
-//
-// Public C functions below
-//
+pub(crate) mod ffi {
+    use glib::translate::*;
+    use libc::c_char;
 
-// Virtual method callers
-/// # Safety
-///
-/// Must be a FooInstance object.
-#[no_mangle]
-pub unsafe extern "C" fn ex_foo_increment(this: *mut ffi::Foo, inc: i32) -> i32 {
-    let klass = (*this).get_class();
+    pub type ExFoo = <super::Foo as super::ObjectSubclass>::Instance;
+    pub type ExFooClass = super::FooClass;
 
-    (klass.increment.unwrap())(this, inc)
-}
+    /// # Safety
+    ///
+    /// Must be a ExFoo object.
+    #[no_mangle]
+    pub unsafe extern "C" fn ex_foo_increment(this: *mut ExFoo, inc: i32) -> i32 {
+        let klass = glib::subclass::types::InstanceStruct::get_class(&*this);
 
-// Trampolines to safe Rust implementations
-/// # Safety
-///
-/// Must be a FooInstance object.
-#[no_mangle]
-pub unsafe extern "C" fn ex_foo_get_counter(this: *mut ffi::Foo) -> i32 {
-    let imp = (*this).get_impl();
-    imp.get_counter(&from_glib_borrow(this))
-}
+        (klass.increment.unwrap())(this, inc)
+    }
 
-/// # Safety
-///
-/// Must be a FooInstance object.
-#[no_mangle]
-pub unsafe extern "C" fn ex_foo_get_name(this: *mut ffi::Foo) -> *mut c_char {
-    let imp = (*this).get_impl();
-    imp.get_name(&from_glib_borrow(this)).to_glib_full()
-}
+    // Trampolines to safe Rust implementations
+    /// # Safety
+    ///
+    /// Must be a FooInstance object.
+    #[no_mangle]
+    pub unsafe extern "C" fn ex_foo_get_counter(this: *mut ExFoo) -> i32 {
+        let imp = glib::subclass::types::InstanceStruct::get_impl(&*this);
+        imp.get_counter(&from_glib_borrow(this))
+    }
 
-// GObject glue
-/// # Safety
-///
-/// Must be a valid C string, 0-terminated.
-#[no_mangle]
-pub unsafe extern "C" fn ex_foo_new(name: *const c_char) -> *mut ffi::Foo {
-    let obj = glib::Object::new::<super::Foo>(&[("name", &*glib::GString::from_glib_borrow(name))])
+    /// # Safety
+    ///
+    /// Must be a FooInstance object.
+    #[no_mangle]
+    pub unsafe extern "C" fn ex_foo_get_name(this: *mut ExFoo) -> *mut c_char {
+        let imp = glib::subclass::types::InstanceStruct::get_impl(&*this);
+        imp.get_name(&from_glib_borrow(this)).to_glib_full()
+    }
+
+    // GObject glue
+    /// # Safety
+    ///
+    /// Must be a valid C string, 0-terminated.
+    #[no_mangle]
+    pub unsafe extern "C" fn ex_foo_new(name: *const c_char) -> *mut ExFoo {
+        let obj = glib::Object::new::<super::super::Foo>(&[(
+            "name",
+            &*glib::GString::from_glib_borrow(name),
+        )])
         .unwrap();
-    obj.to_glib_full()
-}
+        obj.to_glib_full()
+    }
 
-#[no_mangle]
-pub extern "C" fn ex_foo_get_type() -> glib::ffi::GType {
-    Foo::get_type().to_glib()
+    #[no_mangle]
+    pub extern "C" fn ex_foo_get_type() -> glib::ffi::GType {
+        <super::Foo as glib::subclass::types::ObjectSubclassType>::get_type().to_glib()
+    }
 }
 
 // Virtual method default implementation trampolines
-unsafe extern "C" fn increment_default_trampoline(this: *mut ffi::Foo, inc: i32) -> i32 {
+unsafe extern "C" fn increment_default_trampoline(this: *mut ffi::ExFoo, inc: i32) -> i32 {
     let imp = (*this).get_impl();
     imp.increment(&from_glib_borrow(this), inc)
 }
 
-unsafe extern "C" fn incremented_default_trampoline(this: *mut ffi::Foo, val: i32, inc: i32) {
+unsafe extern "C" fn incremented_default_trampoline(this: *mut ffi::ExFoo, val: i32, inc: i32) {
     let imp = (*this).get_impl();
     imp.incremented(&from_glib_borrow(this), val, inc);
 }
