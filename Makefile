@@ -90,3 +90,6 @@ run-c: test-c
 
 check:
 	cargo test
+
+check-bindings: target/debug/libgobject_example.so
+	cargo test --features=bindings
