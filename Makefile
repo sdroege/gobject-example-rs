@@ -93,3 +93,5 @@ check:
 
 check-bindings: target/debug/libgobject_example.so
 	cargo test --features=bindings
+
+check-all: check check-bindings run-c run-python run-gjs run-vala
