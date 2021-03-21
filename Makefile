@@ -82,8 +82,8 @@ test-vala: test.vala Ex-0.1.vapi
 run-vala: test-vala
 	./test-vala
 
-test-c: test.c target/debug/libgobject_example.so $(HEADERS)
-	$(CC) `pkg-config --cflags --libs Ex-0.1` $< -o $@
+test-c: test.c target/debug/libgobject_example.so Ex-0.1.pc $(HEADERS)
+	$(CC) -Wall $< `pkg-config --cflags --libs Ex-0.1` -o $@
 
 run-c: test-c
 	./test-c
