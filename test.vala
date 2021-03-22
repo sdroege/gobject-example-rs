@@ -4,6 +4,10 @@ void on_incremented (int val, int inc) {
 	stdout.printf ("incremented to %d by %d\n", val, inc);
 }
 
+void throw_err() throws Ex.Error {
+	throw new Ex.Error.FAILED ("something went wrong");
+}
+
 public int main (string[] args) {
 	var foo = new Ex.Foo ("foo's name");
 	foo.incremented.connect (on_incremented);
@@ -41,5 +45,11 @@ public int main (string[] args) {
 	var ss2 = ss.ref ();
 	stdout.printf ("shared rstring 2: %s\n", ss2.get ());
 
+	try {
+		throw_err();
+		assert_not_reached();
+	} catch (Ex.Error e) {
+		assert_error(e, Ex.Error.quark(), Ex.Error.FAILED);
+	}
 	return 0;
 }

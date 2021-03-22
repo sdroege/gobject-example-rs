@@ -1,6 +1,7 @@
 #ifndef __EX_H__
 #define __EX_H__
 
+#include "error.h"
 #include "flags.h"
 #include "color.h"
 #include "foo.h"
