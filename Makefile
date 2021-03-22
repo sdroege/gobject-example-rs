@@ -1,5 +1,6 @@
 HEADERS = \
 	include/ex/ex.h \
+	include/ex/error.h \
 	include/ex/flags.h \
 	include/ex/color.h \
 	include/ex/foo.h \
@@ -13,6 +14,9 @@ RUST_SOURCES = \
 	src/color/ffi.rs \
 	src/color/imp.rs \
 	src/color/mod.rs \
+	src/error/ffi.rs \
+	src/error/imp.rs \
+	src/error/mod.rs \
 	src/flags/ffi.rs \
 	src/flags/imp.rs \
 	src/flags/mod.rs \
