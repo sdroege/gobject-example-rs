@@ -6,7 +6,7 @@ use imp::ffi;
 #[cfg(feature = "bindings")]
 mod ffi;
 
-use glib::{StaticType, Type, translate::*};
+use glib::{translate::*, StaticType, Type};
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Clone, Copy)]
 #[non_exhaustive]
