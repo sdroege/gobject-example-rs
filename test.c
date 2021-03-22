@@ -11,8 +11,8 @@ int
 main (int argc, const char *argv[])
 {
     char *str;
-    ExFoo *foo;
-    ExBar *bar;
+    g_autoptr(ExFoo) foo = NULL;
+    g_autoptr(ExBar) bar = NULL;
     ExRString *s, *s2;
     ExSharedRString *ss, *ss2;
     gdouble number;
@@ -26,7 +26,6 @@ main (int argc, const char *argv[])
     g_print ("foo inc 1: %d\n", ex_foo_increment (foo, 1));
     g_print ("foo inc 10: %d\n", ex_foo_increment (foo, 10));
     g_print ("foo counter: %d\n", ex_foo_get_counter (foo));
-    g_object_unref (foo);
 
     bar = ex_bar_new ("bar's name");
     g_signal_connect (bar, "incremented", G_CALLBACK (on_incremented), NULL);
@@ -50,7 +49,6 @@ main (int argc, const char *argv[])
     g_print ("bar number: %f\n", ex_bar_get_number (bar));
     g_object_get (bar, "number", &number, NULL);
     g_print ("bar number (property): %f\n", number);
-    g_object_unref (bar);
 
     s = ex_rstring_new ("something");
 
