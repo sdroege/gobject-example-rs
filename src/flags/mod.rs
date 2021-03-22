@@ -6,7 +6,7 @@ use imp::ffi;
 #[cfg(feature = "bindings")]
 mod ffi;
 
-use glib::{StaticType, Type, translate::*};
+use glib::{translate::*, StaticType, Type};
 
 use bitflags::bitflags;
 
@@ -52,6 +52,5 @@ mod tests {
         let v = e.value(1).unwrap();
         assert_eq!(v.name(), "Some");
         assert_eq!(v.nick(), "some");
-
     }
 }
