@@ -61,10 +61,10 @@ mod tests {
         assert_eq!(t.name(), "ExColor");
 
         let e = glib::EnumClass::new(t).unwrap();
-        let v = e.get_value(1).unwrap();
-        assert_eq!(v.get_name(), "Green");
-        assert_eq!(v.get_nick(), "green");
+        let v = e.value(1).unwrap();
+        assert_eq!(v.name(), "Green");
+        assert_eq!(v.nick(), "green");
 
-        assert_eq!(e.get_value(42), None);
+        assert_eq!(e.value(42), None);
     }
 }

@@ -68,6 +68,6 @@ pub(crate) mod ffi {
     // GObject glue
     #[no_mangle]
     pub extern "C" fn ex_shared_rstring_get_type() -> glib::ffi::GType {
-        <super::SharedRString as glib::subclass::boxed::BoxedType>::get_type().to_glib()
+        <super::SharedRString as glib::subclass::boxed::BoxedType>::type_().to_glib()
     }
 }

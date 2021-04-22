@@ -76,7 +76,7 @@ impl ObjectImpl for Foo {
                 let inc = args[2].get::<i32>().unwrap().unwrap();
 
                 unsafe {
-                    let klass = &*(obj.get_object_class() as *const _ as *const FooClass);
+                    let klass = &*(obj.object_class() as *const _ as *const FooClass);
                     if let Some(ref func) = klass.incremented {
                         func(obj.as_ptr() as *mut ffi::ExFoo, val, inc);
                     }
@@ -93,7 +93,7 @@ impl ObjectImpl for Foo {
     fn properties() -> &'static [glib::ParamSpec] {
         use once_cell::sync::Lazy;
         static PROPERTIES: Lazy<Vec<glib::ParamSpec>> = Lazy::new(|| {
-            vec![glib::ParamSpec::string(
+            vec![glib::ParamSpec::new_string(
                 "name",
                 "Name",
                 "Name of this object",
@@ -112,7 +112,7 @@ impl ObjectImpl for Foo {
         value: &glib::Value,
         pspec: &glib::ParamSpec,
     ) {
-        match pspec.get_name() {
+        match pspec.name() {
             "name" => {
                 let name = value.get().unwrap();
                 self.set_name(obj, name);
@@ -121,17 +121,17 @@ impl ObjectImpl for Foo {
         }
     }
 
-    fn get_property(&self, obj: &Self::Type, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
-        match pspec.get_name() {
-            "name" => self.get_name(obj).to_value(),
+    fn property(&self, obj: &Self::Type, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
+        match pspec.name() {
+            "name" => self.name(obj).to_value(),
             _ => unimplemented!(),
         }
     }
 }
 
 impl NameableImpl for Foo {
-    fn get_name(&self, nameable: &Self::Type) -> Option<String> {
-        self.get_name(nameable.dynamic_cast_ref().unwrap())
+    fn name(&self, nameable: &Self::Type) -> Option<String> {
+        self.name(nameable.dynamic_cast_ref().unwrap())
     }
 }
 
@@ -154,11 +154,11 @@ impl Foo {
         // signal that could be overriden by subclasses
     }
 
-    fn get_counter(&self, _this: &super::Foo) -> i32 {
+    fn counter(&self, _this: &super::Foo) -> i32 {
         *self.counter.borrow()
     }
 
-    fn get_name(&self, _this: &super::Foo) -> Option<String> {
+    fn name(&self, _this: &super::Foo) -> Option<String> {
         self.name.borrow().clone()
     }
 
@@ -179,7 +179,7 @@ pub(crate) mod ffi {
     /// Must be a ExFoo object.
     #[no_mangle]
     pub unsafe extern "C" fn ex_foo_increment(this: *mut ExFoo, inc: i32) -> i32 {
-        let klass = glib::subclass::types::InstanceStruct::get_class(&*this);
+        let klass = glib::subclass::types::InstanceStruct::class(&*this);
 
         (klass.increment.unwrap())(this, inc)
     }
@@ -190,8 +190,8 @@ pub(crate) mod ffi {
     /// Must be a FooInstance object.
     #[no_mangle]
     pub unsafe extern "C" fn ex_foo_get_counter(this: *mut ExFoo) -> i32 {
-        let imp = glib::subclass::types::InstanceStruct::get_impl(&*this);
-        imp.get_counter(&from_glib_borrow(this))
+        let imp = glib::subclass::types::InstanceStruct::impl_(&*this);
+        imp.counter(&from_glib_borrow(this))
     }
 
     /// # Safety
@@ -199,8 +199,8 @@ pub(crate) mod ffi {
     /// Must be a FooInstance object.
     #[no_mangle]
     pub unsafe extern "C" fn ex_foo_get_name(this: *mut ExFoo) -> *mut c_char {
-        let imp = glib::subclass::types::InstanceStruct::get_impl(&*this);
-        imp.get_name(&from_glib_borrow(this)).to_glib_full()
+        let imp = glib::subclass::types::InstanceStruct::impl_(&*this);
+        imp.name(&from_glib_borrow(this)).to_glib_full()
     }
 
     // GObject glue
@@ -219,17 +219,17 @@ pub(crate) mod ffi {
 
     #[no_mangle]
     pub extern "C" fn ex_foo_get_type() -> glib::ffi::GType {
-        <super::Foo as glib::subclass::types::ObjectSubclassType>::get_type().to_glib()
+        <super::Foo as glib::subclass::types::ObjectSubclassType>::type_().to_glib()
     }
 }
 
 // Virtual method default implementation trampolines
 unsafe extern "C" fn increment_default_trampoline(this: *mut ffi::ExFoo, inc: i32) -> i32 {
-    let imp = (*this).get_impl();
+    let imp = (*this).impl_();
     imp.increment(&from_glib_borrow(this), inc)
 }
 
 unsafe extern "C" fn incremented_default_trampoline(this: *mut ffi::ExFoo, val: i32, inc: i32) {
-    let imp = (*this).get_impl();
+    let imp = (*this).impl_();
     imp.incremented(&from_glib_borrow(this), val, inc);
 }

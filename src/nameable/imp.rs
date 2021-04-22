@@ -35,14 +35,14 @@ unsafe impl ObjectInterface for NameableInterface {
 // The default implementations are optional!
 //
 unsafe extern "C" fn get_name_default_trampoline(this: *mut Nameable) -> *mut c_char {
-    NameableInterface::get_name_default(&from_glib_borrow(this)).to_glib_full()
+    NameableInterface::name_default(&from_glib_borrow(this)).to_glib_full()
 }
 
 //
 // Safe implementations. These take the wrapper type, and not &Self, as first argument
 //
 impl NameableInterface {
-    fn get_name_default(_this: &super::Nameable) -> Option<String> {
+    fn name_default(_this: &super::Nameable) -> Option<String> {
         None
     }
 }
@@ -57,7 +57,7 @@ pub(crate) mod ffi {
 
     #[no_mangle]
     pub extern "C" fn ex_nameable_get_type() -> glib::ffi::GType {
-        <super::NameableInterface as glib::subclass::interface::ObjectInterfaceType>::get_type()
+        <super::NameableInterface as glib::subclass::interface::ObjectInterfaceType>::type_()
             .to_glib()
     }
 
