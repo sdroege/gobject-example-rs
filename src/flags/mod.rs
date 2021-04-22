@@ -49,9 +49,9 @@ mod tests {
         assert!(t.is_a(glib::Type::FLAGS));
         assert_eq!(t.name(), "ExFlags");
         let e = glib::FlagsClass::new(t).unwrap();
-        let v = e.get_value(1).unwrap();
-        assert_eq!(v.get_name(), "Some");
-        assert_eq!(v.get_nick(), "some");
+        let v = e.value(1).unwrap();
+        assert_eq!(v.name(), "Some");
+        assert_eq!(v.nick(), "some");
 
     }
 }

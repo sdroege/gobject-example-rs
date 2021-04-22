@@ -27,7 +27,7 @@ impl ObjectImpl for Bar {
     fn properties() -> &'static [glib::ParamSpec] {
         use once_cell::sync::Lazy;
         static PROPERTIES: Lazy<Vec<glib::ParamSpec>> = Lazy::new(|| {
-            vec![glib::ParamSpec::double(
+            vec![glib::ParamSpec::new_double(
                 "number",
                 "Number",
                 "Some number",
@@ -48,7 +48,7 @@ impl ObjectImpl for Bar {
         value: &glib::Value,
         pspec: &glib::ParamSpec,
     ) {
-        match pspec.get_name() {
+        match pspec.name() {
             "number" => {
                 let number = value.get().unwrap().unwrap();
                 self.set_number(obj, number);
@@ -57,9 +57,9 @@ impl ObjectImpl for Bar {
         }
     }
 
-    fn get_property(&self, obj: &Self::Type, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
-        match pspec.get_name() {
-            "number" => self.get_number(obj).to_value(),
+    fn property(&self, obj: &Self::Type, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
+        match pspec.name() {
+            "number" => self.number(obj).to_value(),
             _ => unimplemented!(),
         }
     }
@@ -77,7 +77,7 @@ impl Bar {
         this.notify("number");
     }
 
-    fn get_number(&self, _this: &super::Bar) -> f64 {
+    fn number(&self, _this: &super::Bar) -> f64 {
         *self.number.borrow_mut()
     }
 }
@@ -93,8 +93,8 @@ pub(crate) mod ffi {
     /// Must be a BarInstance object.
     #[no_mangle]
     pub unsafe extern "C" fn ex_bar_get_number(this: *mut ExBar) -> f64 {
-        let imp = glib::subclass::types::InstanceStruct::get_impl(&*this);
-        imp.get_number(&from_glib_borrow(this))
+        let imp = glib::subclass::types::InstanceStruct::impl_(&*this);
+        imp.number(&from_glib_borrow(this))
     }
 
     /// # Safety
@@ -102,7 +102,7 @@ pub(crate) mod ffi {
     /// Must be a BarInstance object.
     #[no_mangle]
     pub unsafe extern "C" fn ex_bar_set_number(this: *mut ExBar, num: f64) {
-        let imp = glib::subclass::types::InstanceStruct::get_impl(&*this);
+        let imp = glib::subclass::types::InstanceStruct::impl_(&*this);
         imp.set_number(&from_glib_borrow(this), num);
     }
 
@@ -122,6 +122,6 @@ pub(crate) mod ffi {
 
     #[no_mangle]
     pub extern "C" fn ex_bar_get_type() -> glib::ffi::GType {
-        <super::Bar as glib::subclass::types::ObjectSubclassType>::get_type().to_glib()
+        <super::Bar as glib::subclass::types::ObjectSubclassType>::type_().to_glib()
     }
 }

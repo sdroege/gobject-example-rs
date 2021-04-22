@@ -19,7 +19,7 @@ glib::wrapper! {
     match fn {
         copy => |ptr| ffi::ex_shared_rstring_ref(ptr),
         free => |ptr| ffi::ex_shared_rstring_unref(ptr),
-        get_type => || ffi::ex_shared_rstring_get_type(),
+        type_ => || ffi::ex_shared_rstring_get_type(),
     }
 }
 
