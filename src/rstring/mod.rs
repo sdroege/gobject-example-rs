@@ -14,7 +14,7 @@ glib::wrapper! {
     match fn {
         copy => |ptr| ffi::ex_rstring_copy(ptr),
         free => |ptr| ffi::ex_rstring_free(ptr),
-        get_type => || ffi::ex_rstring_get_type(),
+        type_ => || ffi::ex_rstring_get_type(),
     }
 }
 

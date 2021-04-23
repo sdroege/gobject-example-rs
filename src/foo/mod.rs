@@ -20,7 +20,7 @@ glib::wrapper! {
     pub struct Foo(Object<ffi::ExFoo, ffi::ExFooClass>) @implements Nameable;
 
     match fn {
-        get_type => || ffi::ex_foo_get_type(),
+        type_ => || ffi::ex_foo_get_type(),
     }
 }
 
@@ -37,10 +37,10 @@ impl Foo {
 
 pub trait FooExt {
     fn increment(&self, inc: i32) -> i32;
-    fn get_counter(&self) -> i32;
-    fn get_name(&self) -> Option<String>;
+    fn counter(&self) -> i32;
+    fn name(&self) -> Option<String>;
 
-    fn get_property_name(&self) -> Option<String>;
+    fn property_name(&self) -> Option<String>;
 
     fn connect_incremented<F: Fn(&Self, i32, i32) + 'static>(&self, f: F) -> SignalHandlerId;
 }
@@ -50,15 +50,15 @@ impl<O: IsA<Foo>> FooExt for O {
         unsafe { ffi::ex_foo_increment(self.as_ref().to_glib_none().0, inc) }
     }
 
-    fn get_counter(&self) -> i32 {
+    fn counter(&self) -> i32 {
         unsafe { ffi::ex_foo_get_counter(self.as_ref().to_glib_none().0) }
     }
 
-    fn get_name(&self) -> Option<String> {
+    fn name(&self) -> Option<String> {
         unsafe { from_glib_full(ffi::ex_foo_get_name(self.as_ref().to_glib_none().0)) }
     }
 
-    fn get_property_name(&self) -> Option<String> {
+    fn property_name(&self) -> Option<String> {
         let mut value = glib::Value::from(None::<&str>);
         unsafe {
             glib::gobject_ffi::g_object_get_property(
@@ -112,7 +112,7 @@ pub trait FooImpl: ObjectImpl + 'static {
     fn parent_increment(&self, obj: &Foo, inc: i32) -> i32 {
         unsafe {
             let data = Self::type_data();
-            let parent_class = data.as_ref().get_parent_class() as *mut ffi::ExFooClass;
+            let parent_class = data.as_ref().parent_class() as *mut ffi::ExFooClass;
             if let Some(ref f) = (*parent_class).increment {
                 f(obj.to_glib_none().0, inc)
             } else {
@@ -124,7 +124,7 @@ pub trait FooImpl: ObjectImpl + 'static {
     fn parent_incremented(&self, obj: &Foo, val: i32, inc: i32) {
         unsafe {
             let data = Self::type_data();
-            let parent_class = data.as_ref().get_parent_class() as *mut ffi::ExFooClass;
+            let parent_class = data.as_ref().parent_class() as *mut ffi::ExFooClass;
             if let Some(ref f) = (*parent_class).incremented {
                 f(obj.to_glib_none().0, val, inc)
             }
@@ -151,7 +151,7 @@ where
     T: FooImpl,
 {
     let instance = &*(this as *const T::Instance);
-    let imp = instance.get_impl();
+    let imp = instance.impl_();
     imp.increment(&from_glib_borrow(this), inc)
 }
 
@@ -163,7 +163,7 @@ unsafe extern "C" fn incremented_trampoline<T: ObjectSubclass>(
     T: FooImpl,
 {
     let instance = &*(this as *const T::Instance);
-    let imp = instance.get_impl();
+    let imp = instance.impl_();
     imp.incremented(&from_glib_borrow(this), val, inc);
 }
 
@@ -190,20 +190,20 @@ mod tests {
             *incremented_clone.borrow_mut() = (val, inc);
         });
 
-        assert_eq!(foo.get_counter(), 0);
+        assert_eq!(foo.counter(), 0);
         assert_eq!(foo.increment(1), 1);
         assert_eq!(*incremented.borrow(), (1, 1));
-        assert_eq!(foo.get_counter(), 1);
+        assert_eq!(foo.counter(), 1);
         assert_eq!(foo.increment(10), 11);
         assert_eq!(*incremented.borrow(), (11, 10));
-        assert_eq!(foo.get_counter(), 11);
+        assert_eq!(foo.counter(), 11);
     }
 
     #[test]
     fn test_name() {
         let foo = Foo::new(Some("foo's name"));
 
-        assert_eq!(foo.get_name(), Some("foo's name".into()));
-        assert_eq!(foo.get_property_name(), Some("foo's name".into()));
+        assert_eq!(foo.name(), Some("foo's name".into()));
+        assert_eq!(foo.property_name(), Some("foo's name".into()));
     }
 }

@@ -14,22 +14,22 @@ glib::wrapper! {
     pub struct Nameable(Interface<ffi::ExNameable, ffi::ExNameableInterface>);
 
     match fn {
-        get_type => || ffi::ex_nameable_get_type(),
+        type_ => || ffi::ex_nameable_get_type(),
     }
 }
 
 pub trait NameableExt {
-    fn get_name(&self) -> Option<String>;
+    fn name(&self) -> Option<String>;
 }
 
 impl<O: IsA<Nameable>> NameableExt for O {
-    fn get_name(&self) -> Option<String> {
+    fn name(&self) -> Option<String> {
         unsafe { from_glib_full(ffi::ex_nameable_get_name(self.as_ref().to_glib_none().0)) }
     }
 }
 
 pub trait NameableImpl: ObjectImpl {
-    fn get_name(&self, nameable: &Self::Type) -> Option<String>;
+    fn name(&self, nameable: &Self::Type) -> Option<String>;
 }
 
 unsafe impl<T: ObjectSubclass + NameableImpl> IsImplementable<T> for Nameable {
@@ -47,9 +47,9 @@ where
     T: NameableImpl,
 {
     let instance = &*(nameable as *mut T::Instance);
-    let imp = instance.get_impl();
+    let imp = instance.impl_();
 
-    imp.get_name(from_glib_borrow::<_, Nameable>(nameable).unsafe_cast_ref())
+    imp.name(from_glib_borrow::<_, Nameable>(nameable).unsafe_cast_ref())
         .to_glib_full()
 }
 
@@ -66,6 +66,6 @@ mod tests {
         // We cast here because otherwise we would just use the get_name() of foo itself
         let nameable = foo.upcast::<Nameable>();
 
-        assert_eq!(nameable.get_name(), Some("foo's name".into()));
+        assert_eq!(nameable.name(), Some("foo's name".into()));
     }
 }

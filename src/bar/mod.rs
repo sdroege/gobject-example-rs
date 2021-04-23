@@ -21,7 +21,7 @@ glib::wrapper! {
     pub struct Bar(Object<ffi::ExBar, ffi::ExBarClass>) @extends Foo, @implements Nameable;
 
     match fn {
-        get_type => || ffi::ex_bar_get_type(),
+        type_ => || ffi::ex_bar_get_type(),
     }
 }
 
@@ -39,11 +39,11 @@ impl Bar {
         unsafe { ffi::ex_bar_set_number(self.to_glib_none().0, num) }
     }
 
-    pub fn get_number(&self) -> f64 {
+    pub fn number(&self) -> f64 {
         unsafe { ffi::ex_bar_get_number(self.to_glib_none().0) }
     }
 
-    pub fn get_property_number(&self) -> f64 {
+    pub fn property_number(&self) -> f64 {
         let mut value = glib::Value::from(&0.0f64);
         unsafe {
             glib::gobject_ffi::g_object_get_property(
@@ -106,19 +106,19 @@ mod tests {
     fn test_counter() {
         let bar = Bar::new(Some("bar's name"));
 
-        assert_eq!(bar.get_counter(), 0);
+        assert_eq!(bar.counter(), 0);
         assert_eq!(bar.increment(1), 2);
-        assert_eq!(bar.get_counter(), 2);
+        assert_eq!(bar.counter(), 2);
         assert_eq!(bar.increment(10), 22);
-        assert_eq!(bar.get_counter(), 22);
+        assert_eq!(bar.counter(), 22);
     }
 
     #[test]
     fn test_name() {
         let bar = Bar::new(Some("bar's name"));
 
-        assert_eq!(bar.get_name(), Some("bar's name".into()));
-        assert_eq!(bar.get_property_name(), Some("bar's name".into()));
+        assert_eq!(bar.name(), Some("bar's name".into()));
+        assert_eq!(bar.property_name(), Some("bar's name".into()));
     }
 
     #[test]
@@ -132,15 +132,15 @@ mod tests {
         });
 
         assert_eq!(*counter.borrow(), 0);
-        assert_eq!(bar.get_number(), 0.0);
-        assert_eq!(bar.get_property_number(), 0.0);
+        assert_eq!(bar.number(), 0.0);
+        assert_eq!(bar.property_number(), 0.0);
         bar.set_number(10.0);
         assert_eq!(*counter.borrow(), 1);
-        assert_eq!(bar.get_number(), 10.0);
-        assert_eq!(bar.get_property_number(), 10.0);
+        assert_eq!(bar.number(), 10.0);
+        assert_eq!(bar.property_number(), 10.0);
         bar.set_property_number(20.0);
         assert_eq!(*counter.borrow(), 2);
-        assert_eq!(bar.get_number(), 20.0);
-        assert_eq!(bar.get_property_number(), 20.0);
+        assert_eq!(bar.number(), 20.0);
+        assert_eq!(bar.property_number(), 20.0);
     }
 }
