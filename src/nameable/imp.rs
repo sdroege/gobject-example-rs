@@ -48,7 +48,7 @@ impl NameableInterface {
 }
 
 pub(crate) mod ffi {
-    use glib::translate::ToGlib;
+    use glib::translate::IntoGlib;
     use libc::c_char;
     use std::ptr;
 
@@ -58,7 +58,7 @@ pub(crate) mod ffi {
     #[no_mangle]
     pub extern "C" fn ex_nameable_get_type() -> glib::ffi::GType {
         <super::NameableInterface as glib::subclass::interface::ObjectInterfaceType>::type_()
-            .to_glib()
+            .into_glib()
     }
 
     // Virtual method callers

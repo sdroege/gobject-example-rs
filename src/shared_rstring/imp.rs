@@ -18,7 +18,7 @@ impl SharedRString {
 }
 
 pub(crate) mod ffi {
-    use glib::translate::{from_glib_none, ToGlib, ToGlibPtr};
+    use glib::translate::{from_glib_none, IntoGlib, ToGlibPtr};
     use libc::c_char;
 
     pub type ExSharedRString = super::SharedRString;
@@ -68,6 +68,6 @@ pub(crate) mod ffi {
     // GObject glue
     #[no_mangle]
     pub extern "C" fn ex_shared_rstring_get_type() -> glib::ffi::GType {
-        <super::SharedRString as glib::subclass::boxed::BoxedType>::type_().to_glib()
+        <super::SharedRString as glib::StaticType>::static_type().into_glib()
     }
 }

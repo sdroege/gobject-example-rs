@@ -71,9 +71,9 @@ impl ObjectImpl for Foo {
                 glib::Type::UNIT.into(),
             )
             .class_handler(|_, args| {
-                let obj = args[0].get::<glib::Object>().unwrap().unwrap();
-                let val = args[1].get::<i32>().unwrap().unwrap();
-                let inc = args[2].get::<i32>().unwrap().unwrap();
+                let obj = args[0].get::<glib::Object>().unwrap();
+                let val = args[1].get::<i32>().unwrap();
+                let inc = args[2].get::<i32>().unwrap();
 
                 unsafe {
                     let klass = &*(obj.object_class() as *const _ as *const FooClass);
@@ -219,7 +219,7 @@ pub(crate) mod ffi {
 
     #[no_mangle]
     pub extern "C" fn ex_foo_get_type() -> glib::ffi::GType {
-        <super::Foo as glib::subclass::types::ObjectSubclassType>::type_().to_glib()
+        <super::super::Foo as glib::StaticType>::static_type().into_glib()
     }
 }
 
