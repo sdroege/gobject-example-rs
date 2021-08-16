@@ -18,10 +18,10 @@ bitflags! {
     }
 }
 
-impl ToGlib for Flags {
+impl IntoGlib for Flags {
     type GlibType = ffi::ExFlags;
 
-    fn to_glib(&self) -> ffi::ExFlags {
+    fn into_glib(self) -> ffi::ExFlags {
         self.bits()
     }
 }

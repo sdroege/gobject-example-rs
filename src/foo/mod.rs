@@ -59,7 +59,7 @@ impl<O: IsA<Foo>> FooExt for O {
     }
 
     fn property_name(&self) -> Option<String> {
-        let mut value = glib::Value::from(None::<&str>);
+        let mut value = glib::Value::for_value_type::<&str>();
         unsafe {
             glib::gobject_ffi::g_object_get_property(
                 self.as_ptr() as *mut glib::gobject_ffi::GObject,

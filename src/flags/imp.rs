@@ -9,7 +9,7 @@ pub(crate) mod ffi {
     use glib::translate::*;
     use glib::StaticType;
 
-    pub type ExFlags = <super::Flags as ToGlib>::GlibType;
+    pub type ExFlags = <super::Flags as IntoGlib>::GlibType;
 
     pub const EX_FLAGS_SOME: ExFlags = super::Flags::SOME.bits();
     pub const EX_FLAGS_ZING: ExFlags = super::Flags::ZING.bits();
@@ -17,6 +17,6 @@ pub(crate) mod ffi {
 
     #[no_mangle]
     pub unsafe extern "C" fn ex_flags_get_type() -> glib::ffi::GType {
-        super::Flags::static_type().to_glib()
+        super::Flags::static_type().into_glib()
     }
 }

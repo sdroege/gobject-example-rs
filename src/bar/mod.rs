@@ -52,7 +52,7 @@ impl Bar {
                 value.to_glib_none_mut().0,
             );
         }
-        value.get().unwrap().unwrap()
+        value.get().unwrap()
     }
 
     pub fn set_property_number(&self, num: f64) {

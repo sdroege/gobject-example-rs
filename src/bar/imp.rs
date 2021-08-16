@@ -50,7 +50,7 @@ impl ObjectImpl for Bar {
     ) {
         match pspec.name() {
             "number" => {
-                let number = value.get().unwrap().unwrap();
+                let number = value.get().unwrap();
                 self.set_number(obj, number);
             }
             _ => unimplemented!(),
@@ -122,6 +122,6 @@ pub(crate) mod ffi {
 
     #[no_mangle]
     pub extern "C" fn ex_bar_get_type() -> glib::ffi::GType {
-        <super::Bar as glib::subclass::types::ObjectSubclassType>::type_().to_glib()
+        <super::super::Bar as glib::StaticType>::static_type().into_glib()
     }
 }

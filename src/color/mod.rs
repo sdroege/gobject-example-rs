@@ -17,11 +17,11 @@ pub enum Color {
     __Unknown(i32),
 }
 
-impl ToGlib for Color {
+impl IntoGlib for Color {
     type GlibType = ffi::ExColor;
 
-    fn to_glib(&self) -> ffi::ExColor {
-        match *self {
+    fn into_glib(self) -> ffi::ExColor {
+        match self {
             Color::Red => ffi::EX_COLOR_RED,
             Color::Green => ffi::EX_COLOR_GREEN,
             Color::Blue => ffi::EX_COLOR_BLUE,
@@ -54,7 +54,7 @@ mod tests {
     #[test]
     fn test_enum() {
         let c = Color::Blue;
-        assert_eq!(c.to_glib(), 2);
+        assert_eq!(c.into_glib(), 2);
 
         let t = Color::static_type();
         assert!(t.is_a(glib::Type::ENUM));
