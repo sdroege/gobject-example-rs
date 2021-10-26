@@ -1,3 +1,8 @@
 /target/
 **/*.rs.bk
 Cargo.lock
+Ex-0.1.gir
+Ex-0.1.typelib
+Ex-0.1.vapi
+test-c
+test-vala
