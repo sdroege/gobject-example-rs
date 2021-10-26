@@ -45,6 +45,8 @@ public int main (string[] args) {
 	var ss2 = ss.ref ();
 	stdout.printf ("shared rstring 2: %s\n", ss2.get ());
 
+	stdout.printf ("BLUE color: %d\n".printf (Ex.Color.BLUE));
+
 	try {
 		throw_err();
 		assert_not_reached();
