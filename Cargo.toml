@@ -22,6 +22,7 @@ cbindgen = { path = "cbindgen", features = ["gobject"] }
 rustflags = "-Cpanic=abort"
 
 [package.metadata.capi.header]
+name = "ex" # let's make it match the namespace
 subdirectory = "gobject-example-0.1"
 generation = false # gobject cbindgen support is missing atm
 
