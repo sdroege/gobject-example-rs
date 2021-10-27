@@ -1,5 +1,5 @@
 #include <glib.h>
-#include <ex/ex.h>
+#include <ex.h>
 
 static void
 on_incremented (ExFoo *foo, gint val, gint inc, void *user_data)
