@@ -1,18 +1,16 @@
-HEADERS = \
-	include/ex/ex.h \
-	include/ex/flags.h \
-	include/ex/color.h \
-	include/ex/foo.h \
-	include/ex/bar.h \
-	include/ex/nameable.h \
-	include/ex/rstring.h \
-	include/ex/shared-rstring.h \
+HEADER = inst/usr/include/gobject-example-0.1/ex.h
+GIR = inst/usr/share/gir-1.0/Ex-0.1.gir
+TYPELIB = inst/usr/lib64/girepository-1.0/Ex-0.1.typelib
+VAPI = inst/usr/share/vala/vapi/gobject-example-0.1.vapi
 
 RUST_SOURCES = \
 	src/lib.rs \
 	src/color/ffi.rs \
 	src/color/imp.rs \
 	src/color/mod.rs \
+	src/error/ffi.rs \
+	src/error/imp.rs \
+	src/error/mod.rs \
 	src/flags/ffi.rs \
 	src/flags/imp.rs \
 	src/flags/mod.rs \
@@ -32,58 +30,58 @@ RUST_SOURCES = \
 	src/shared_rstring/imp.rs \
 	src/shared_rstring/mod.rs
 
-all: Ex-0.1.gir Ex-0.1.typelib Ex-0.1.vapi
+all: $(GIR) $(TYPELIB) $(VAPI)
 
-export PKG_CONFIG_PATH=$(PWD)
-export GI_TYPELIB_PATH=$(PWD)
-export LD_LIBRARY_PATH=$(PWD)/target/debug
+export PKG_CONFIG_PATH=$(PWD)/inst/usr/lib64/pkgconfig
+export GI_TYPELIB_PATH=$(PWD)/inst/usr/lib64/girepository-1.0
+export LD_LIBRARY_PATH=$(PWD)/inst/usr/lib64
 
-target/debug/libgobject_example.so: $(RUST_SOURCES)
-	cargo build
+$(HEADER): $(RUST_SOURCES)
+	cargo cinstall --release --destdir=inst --prefix=/usr --libdir=/usr/lib64
 
-Ex-0.1.gir: target/debug/libgobject_example.so $(HEADERS)
+$(GIR): $(HEADER)
+	mkdir -p $(@D)
 	g-ir-scanner -v --warn-all \
 		--namespace Ex --nsversion=0.1 \
-		-Iinclude --c-include "ex/ex.h" \
-		--library=gobject_example --library-path=target/debug \
+		-Iinst/include --c-include "ex.h" \
+		--library=gobject_example --library-path=inst/usr/lib64 \
 		--include=GObject-2.0 -pkg gobject-2.0 \
 		--output $@ \
-		$(HEADERS)
-
-Ex-0.1.typelib: Ex-0.1.gir
-	g-ir-compiler \
-		--includedir=include \
-		$< -o $@
-
-Ex-0.1.vapi: Ex-0.1.gir
-	vapigen \
-		--library Ex-0.1 \
 		$<
 
-clean:
-	rm -f Ex-0.1.typelib
-	rm -f Ex-0.1.gir
-	rm -f Ex-0.1.vapi test-vala
-	rm -rf test-c
-	cargo clean
+$(TYPELIB): $(GIR)
+	mkdir -p $(@D)
+	g-ir-compiler $< -o $@
 
-run-python: Ex-0.1.typelib
+$(VAPI): $(GIR)
+	mkdir -p $(@D)
+	vapigen \
+		--library gobject-example-0.1 \
+		$< -d $(@D)
+
+run-python: $(TYPELIB)
 	python3 test.py
 
-run-gjs: Ex-0.1.typelib
+run-gjs: $(TYPELIB)
 	gjs test.js
 
-test-vala: test.vala Ex-0.1.vapi
+test-vala: test.vala $(VAPI)
 	valac -v \
-		--vapidir=$(PWD) \
-		--pkg=Ex-0.1 \
+		--vapidir=inst/usr/share/vala/vapi \
+		-X -Iinst/usr/include/gobject-example-0.1 \
+		-X -Linst/usr/lib64 \
+		--pkg=gobject-example-0.1 \
 		$< -o $@
 
 run-vala: test-vala
 	./test-vala
 
-test-c: test.c target/debug/libgobject_example.so Ex-0.1.pc $(HEADERS)
-	$(CC) -Wall $< `pkg-config --cflags --libs Ex-0.1` -o $@
+test-c: test.c $(HEADER)
+	$(CC) -Wall \
+		$(shell pkg-config --cflags --libs gobject-example-0.1) \
+		-Iinst/usr/include/gobject-example-0.1 \
+		-Linst/usr/lib64 \
+		$< -o $@
 
 run-c: test-c
 	./test-c
@@ -91,7 +89,10 @@ run-c: test-c
 check:
 	cargo test
 
-check-bindings: target/debug/libgobject_example.so
+check-bindings: $(HEADER)
 	cargo test --features=bindings
+
+install: $(HEADER)
+	sudo cp -r inst/* $(DESTDIR)/
 
 check-all: check check-bindings run-c run-python run-gjs run-vala

@@ -2,6 +2,7 @@ use glib::translate::IntoGlib;
 
 #[derive(Debug, Copy, Clone, glib::GEnum)]
 #[genum(type_name = "ExColor")]
+#[repr(C)]
 pub enum Color {
     Red,
     Green,
