@@ -2,8 +2,8 @@ use std::sync::Arc;
 
 // No #[repr(C)] here as we export it as an opaque struct
 // If it was not opaque, it must be #[repr(C)]
-#[derive(Clone, Debug, PartialEq, Eq, glib::GBoxed)]
-#[gboxed(type_name = "ExSharedRString")]
+#[derive(Clone, Debug, PartialEq, Eq, glib::Boxed)]
+#[boxed_type(name = "ExSharedRString")]
 pub struct SharedRString(Arc<Option<String>>);
 
 impl SharedRString {

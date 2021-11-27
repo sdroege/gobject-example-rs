@@ -1,4 +1,4 @@
-#[glib::gflags("ExFlags")]
+#[glib::flags(name = "ExFlags")]
 pub enum Flags {
     SOME = 0b00000001,
     ZING = 0b00000010,
