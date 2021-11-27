@@ -27,7 +27,7 @@ impl ObjectImpl for Bar {
     fn properties() -> &'static [glib::ParamSpec] {
         use once_cell::sync::Lazy;
         static PROPERTIES: Lazy<Vec<glib::ParamSpec>> = Lazy::new(|| {
-            vec![glib::ParamSpec::new_double(
+            vec![glib::ParamSpecDouble::new(
                 "number",
                 "Number",
                 "Some number",

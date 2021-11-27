@@ -1,7 +1,7 @@
 // No #[repr(C)] here as we export it as an opaque struct
 // If it was not opaque, it must be #[repr(C)]
-#[derive(Clone, Debug, PartialEq, Eq, glib::GBoxed)]
-#[gboxed(type_name = "ExRString")]
+#[derive(Clone, Debug, PartialEq, Eq, glib::Boxed)]
+#[boxed_type(name = "ExRString")]
 pub struct RString(Option<String>);
 
 impl RString {

@@ -93,7 +93,7 @@ impl ObjectImpl for Foo {
     fn properties() -> &'static [glib::ParamSpec] {
         use once_cell::sync::Lazy;
         static PROPERTIES: Lazy<Vec<glib::ParamSpec>> = Lazy::new(|| {
-            vec![glib::ParamSpec::new_string(
+            vec![glib::ParamSpecString::new(
                 "name",
                 "Name",
                 "Name of this object",
@@ -144,7 +144,7 @@ impl Foo {
 
         *val += inc;
 
-        this.emit_by_name("incremented", &[&*val, &inc]).unwrap();
+        this.emit_by_name::<()>("incremented", &[&*val, &inc]);
 
         *val
     }
