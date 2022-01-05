@@ -151,7 +151,7 @@ where
     T: FooImpl,
 {
     let instance = &*(this as *const T::Instance);
-    let imp = instance.impl_();
+    let imp = instance.imp();
     imp.increment(&from_glib_borrow(this), inc)
 }
 
@@ -163,7 +163,7 @@ unsafe extern "C" fn incremented_trampoline<T: ObjectSubclass>(
     T: FooImpl,
 {
     let instance = &*(this as *const T::Instance);
-    let imp = instance.impl_();
+    let imp = instance.imp();
     imp.incremented(&from_glib_borrow(this), val, inc);
 }
 

@@ -93,7 +93,7 @@ pub(crate) mod ffi {
     /// Must be a BarInstance object.
     #[no_mangle]
     pub unsafe extern "C" fn ex_bar_get_number(this: *mut ExBar) -> f64 {
-        let imp = glib::subclass::types::InstanceStruct::impl_(&*this);
+        let imp = glib::subclass::types::InstanceStruct::imp(&*this);
         imp.number(&from_glib_borrow(this))
     }
 
@@ -102,7 +102,7 @@ pub(crate) mod ffi {
     /// Must be a BarInstance object.
     #[no_mangle]
     pub unsafe extern "C" fn ex_bar_set_number(this: *mut ExBar, num: f64) {
-        let imp = glib::subclass::types::InstanceStruct::impl_(&*this);
+        let imp = glib::subclass::types::InstanceStruct::imp(&*this);
         imp.set_number(&from_glib_borrow(this), num);
     }
 

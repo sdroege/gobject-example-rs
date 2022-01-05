@@ -190,7 +190,7 @@ pub(crate) mod ffi {
     /// Must be a FooInstance object.
     #[no_mangle]
     pub unsafe extern "C" fn ex_foo_get_counter(this: *mut ExFoo) -> i32 {
-        let imp = glib::subclass::types::InstanceStruct::impl_(&*this);
+        let imp = glib::subclass::types::InstanceStruct::imp(&*this);
         imp.counter(&from_glib_borrow(this))
     }
 
@@ -199,7 +199,7 @@ pub(crate) mod ffi {
     /// Must be a FooInstance object.
     #[no_mangle]
     pub unsafe extern "C" fn ex_foo_get_name(this: *mut ExFoo) -> *mut c_char {
-        let imp = glib::subclass::types::InstanceStruct::impl_(&*this);
+        let imp = glib::subclass::types::InstanceStruct::imp(&*this);
         imp.name(&from_glib_borrow(this)).to_glib_full()
     }
 
@@ -225,11 +225,11 @@ pub(crate) mod ffi {
 
 // Virtual method default implementation trampolines
 unsafe extern "C" fn increment_default_trampoline(this: *mut ffi::ExFoo, inc: i32) -> i32 {
-    let imp = (*this).impl_();
+    let imp = (*this).imp();
     imp.increment(&from_glib_borrow(this), inc)
 }
 
 unsafe extern "C" fn incremented_default_trampoline(this: *mut ffi::ExFoo, val: i32, inc: i32) {
-    let imp = (*this).impl_();
+    let imp = (*this).imp();
     imp.incremented(&from_glib_borrow(this), val, inc);
 }
