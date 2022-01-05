@@ -47,7 +47,7 @@ where
     T: NameableImpl,
 {
     let instance = &*(nameable as *mut T::Instance);
-    let imp = instance.impl_();
+    let imp = instance.imp();
 
     imp.name(from_glib_borrow::<_, Nameable>(nameable).unsafe_cast_ref())
         .to_glib_full()
