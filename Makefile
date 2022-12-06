@@ -50,7 +50,10 @@ Ex-0.1.gir: target/debug/libgobject_example.so $(HEADERS)
 		--namespace Ex --nsversion=0.1 \
 		-Iinclude --c-include "ex/ex.h" \
 		--library=gobject_example --library-path=target/debug \
-		--include=GObject-2.0 -pkg gobject-2.0 \
+		--include GLib-2.0 --pkg glib-2.0 \
+		--include GObject-2.0 --pkg gobject-2.0 \
+		--include Gio-2.0 --pkg gio-2.0 \
+		--pkg-export Ex-0.1 \
 		--output $@ \
 		$(HEADERS)
 
@@ -61,6 +64,7 @@ Ex-0.1.typelib: Ex-0.1.gir
 
 Ex-0.1.vapi: Ex-0.1.gir
 	vapigen \
+		--pkg gio-2.0 \
 		--library Ex-0.1 \
 		$<
 

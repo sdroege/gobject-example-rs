@@ -43,6 +43,8 @@ pub trait FooExt {
     fn property_name(&self) -> Option<String>;
 
     fn connect_incremented<F: Fn(&Self, i32, i32) + 'static>(&self, f: F) -> SignalHandlerId;
+
+    // TODO: add check_async() ?
 }
 
 impl<O: IsA<Foo>> FooExt for O {

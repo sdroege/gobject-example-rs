@@ -2,6 +2,7 @@
 #define __EX_FOO_H__
 
 #include <glib-object.h>
+#include <gio/gio.h>
 
 G_BEGIN_DECLS
 
@@ -33,6 +34,9 @@ ExFoo * ex_foo_new         (const gchar * name);
 gint    ex_foo_increment   (ExFoo * foo, gint inc);
 gint    ex_foo_get_counter (ExFoo * foo);
 gchar * ex_foo_get_name    (ExFoo * foo);
+
+void        ex_foo_check_async  (ExFoo * foo, GCancellable *cancellable, GAsyncReadyCallback callback, gpointer user_data);
+gboolean    ex_foo_check_finish (ExFoo * foo, GAsyncResult *res, GError **error);
 
 G_END_DECLS
 
