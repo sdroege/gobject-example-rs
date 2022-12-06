@@ -51,5 +51,17 @@ public int main (string[] args) {
 	} catch (Ex.Error e) {
 		assert_error(e, Ex.Error.quark(), Ex.Error.FAILED);
 	}
+
+	var loop = new MainLoop();
+	var cancellable = new GLib.Cancellable();
+	foo.check_async.begin(cancellable, (obj, res) => {
+		try {
+			foo.check_async.end(res);
+		} catch (GLib.Error e) {
+			assert_not_reached();
+		}
+		loop.quit();
+	});
+	loop.run();
 	return 0;
 }

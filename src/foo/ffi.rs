@@ -1,4 +1,4 @@
-use std::ffi::c_char;
+use std::ffi::{c_char, c_void};
 
 #[repr(C)]
 pub struct ExFoo {
@@ -15,6 +15,19 @@ pub struct ExFooClass {
 extern "C" {
     pub fn ex_foo_new(name: *const c_char) -> *mut ExFoo;
     pub fn ex_foo_get_type() -> glib::ffi::GType;
+
+    pub fn ex_foo_check_async(
+        this: *mut ExFoo,
+        cancellable: *mut gio::ffi::GCancellable,
+        callback: gio::ffi::GAsyncReadyCallback,
+        user_data: *mut c_void,
+    );
+
+    pub fn ex_foo_check_finish(
+        this: *mut ExFoo,
+        res: *mut gio::ffi::GAsyncResult,
+        error: *mut *mut glib::ffi::GError,
+    ) -> bool;
 
     pub fn ex_foo_increment(this: *mut ExFoo, inc: i32) -> i32;
     pub fn ex_foo_get_counter(this: *mut ExFoo) -> i32;

@@ -155,12 +155,16 @@ impl Foo {
     fn set_name(&self, name: Option<String>) {
         *self.name.borrow_mut() = name;
     }
+
+    async fn check_async(&self) -> Result<(), glib::Error> {
+        Ok(())
+    }
 }
 
 pub(crate) mod ffi {
     use glib::subclass::types::InstanceStructExt;
     use glib::translate::*;
-    use std::ffi::c_char;
+    use std::ffi::{c_char, c_void};
 
     pub type ExFoo = <super::Foo as super::ObjectSubclass>::Instance;
     pub type ExFooClass = super::FooClass;
@@ -207,6 +211,53 @@ pub(crate) mod ffi {
     #[no_mangle]
     pub extern "C" fn ex_foo_get_type() -> glib::ffi::GType {
         <super::super::Foo as glib::StaticType>::static_type().into_glib()
+    }
+
+    #[no_mangle]
+    pub unsafe extern "C" fn ex_foo_check_async(
+        this: *mut ExFoo,
+        cancellable: *mut gio::ffi::GCancellable,
+        callback: gio::ffi::GAsyncReadyCallback,
+        user_data: *mut c_void,
+    ) {
+        let imp = (*this).imp();
+        let obj = &super::super::Foo::from_glib_none(this);
+        let cancellable = gio::Cancellable::from_glib_borrow(cancellable);
+        let callback = callback.unwrap();
+
+        let closure = move |task: gio::LocalTask<bool>, _: Option<&super::super::Foo>| {
+            use glib::Cast;
+
+            let result: *mut gio::ffi::GAsyncResult =
+                task.upcast_ref::<gio::AsyncResult>().to_glib_none().0;
+            callback(this as *mut _, result, user_data)
+        };
+
+        let task = gio::LocalTask::new(Some(obj), Some(&*cancellable), closure);
+
+        glib::MainContext::ref_thread_default().spawn_local(async move {
+            let res = imp.check_async().await.map(|_| true);
+            task.return_result(res);
+        });
+    }
+
+    #[no_mangle]
+    pub unsafe extern "C" fn ex_foo_check_finish(
+        _this: *mut ExFoo,
+        res: *mut gio::ffi::GAsyncResult,
+        error: *mut *mut glib::ffi::GError,
+    ) -> bool {
+        let task = gio::Task::<bool>::from_glib_none(res as *mut gio::ffi::GTask);
+
+        match task.propagate() {
+            Ok(_) => true,
+            Err(e) => {
+                if !error.is_null() {
+                    *error = e.into_glib_ptr();
+                }
+                false
+            }
+        }
     }
 }
 
