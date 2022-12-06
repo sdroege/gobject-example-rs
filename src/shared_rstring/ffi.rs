@@ -1,4 +1,4 @@
-use libc::{c_char, c_void};
+use std::ffi::{c_char, c_void};
 
 // Opaque struct
 #[repr(C)]

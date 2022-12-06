@@ -1,5 +1,5 @@
 use crate::foo;
-use libc::c_char;
+use std::ffi::c_char;
 
 #[repr(C)]
 pub struct ExBar {

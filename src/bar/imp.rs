@@ -79,7 +79,7 @@ impl Bar {
 pub(crate) mod ffi {
     use glib::subclass::types::InstanceStructExt;
     use glib::translate::*;
-    use libc::c_char;
+    use std::ffi::c_char;
 
     pub type ExBar = <super::Bar as super::ObjectSubclass>::Instance;
 

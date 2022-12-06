@@ -160,7 +160,7 @@ impl Foo {
 pub(crate) mod ffi {
     use glib::subclass::types::InstanceStructExt;
     use glib::translate::*;
-    use libc::c_char;
+    use std::ffi::c_char;
 
     pub type ExFoo = <super::Foo as super::ObjectSubclass>::Instance;
     pub type ExFooClass = super::FooClass;

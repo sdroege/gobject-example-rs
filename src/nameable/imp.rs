@@ -1,7 +1,7 @@
 use glib::subclass::prelude::*;
 use glib::translate::{from_glib_borrow, ToGlibPtr};
 
-use libc::{c_char, c_void};
+use std::ffi::{c_char, c_void};
 
 // Instance struct
 pub struct Nameable(c_void);
@@ -49,7 +49,7 @@ impl NameableInterface {
 
 pub(crate) mod ffi {
     use glib::translate::IntoGlib;
-    use libc::c_char;
+    use std::ffi::c_char;
     use std::ptr;
 
     pub type ExNameable = super::Nameable;

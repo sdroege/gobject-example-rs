@@ -1,4 +1,4 @@
-use libc::c_char;
+use std::ffi::c_char;
 
 #[repr(C)]
 pub struct ExFoo {
