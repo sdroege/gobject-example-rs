@@ -1,4 +1,4 @@
-use libc::c_uint;
+use std::ffi::c_uint;
 
 pub type ExFlags = c_uint;
 

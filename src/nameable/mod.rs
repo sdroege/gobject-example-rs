@@ -42,7 +42,7 @@ unsafe impl<T: ObjectSubclass + NameableImpl> IsImplementable<T> for Nameable {
 
 unsafe extern "C" fn get_name_trampoline<T: ObjectSubclass>(
     nameable: *mut ffi::ExNameable,
-) -> *mut libc::c_char
+) -> *mut std::ffi::c_char
 where
     T: NameableImpl,
 {

@@ -19,7 +19,7 @@ impl SharedRString {
 
 pub(crate) mod ffi {
     use glib::translate::{from_glib_none, IntoGlib, ToGlibPtr};
-    use libc::c_char;
+    use std::ffi::c_char;
 
     pub type ExSharedRString = super::SharedRString;
 

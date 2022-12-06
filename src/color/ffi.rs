@@ -1,4 +1,4 @@
-use libc::c_int;
+use std::ffi::c_int;
 
 pub type ExColor = c_int;
 
