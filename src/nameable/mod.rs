@@ -8,7 +8,7 @@ mod ffi;
 
 use glib::subclass::prelude::*;
 use glib::translate::*;
-use glib::{Cast, IsA};
+use glib::IsA;
 
 glib::wrapper! {
     pub struct Nameable(Interface<ffi::ExNameable, ffi::ExNameableInterface>);
@@ -29,7 +29,7 @@ impl<O: IsA<Nameable>> NameableExt for O {
 }
 
 pub trait NameableImpl: ObjectImpl {
-    fn name(&self, nameable: &Self::Type) -> Option<String>;
+    fn name(&self) -> Option<String>;
 }
 
 unsafe impl<T: ObjectSubclass + NameableImpl> IsImplementable<T> for Nameable {
@@ -49,8 +49,7 @@ where
     let instance = &*(nameable as *mut T::Instance);
     let imp = instance.imp();
 
-    imp.name(from_glib_borrow::<_, Nameable>(nameable).unsafe_cast_ref())
-        .to_glib_full()
+    imp.name().to_glib_full()
 }
 
 #[cfg(test)]

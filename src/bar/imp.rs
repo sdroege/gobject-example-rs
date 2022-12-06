@@ -41,25 +41,19 @@ impl ObjectImpl for Bar {
         PROPERTIES.as_ref()
     }
 
-    fn set_property(
-        &self,
-        obj: &Self::Type,
-        _id: usize,
-        value: &glib::Value,
-        pspec: &glib::ParamSpec,
-    ) {
+    fn set_property(&self, _id: usize, value: &glib::Value, pspec: &glib::ParamSpec) {
         match pspec.name() {
             "number" => {
                 let number = value.get().unwrap();
-                self.set_number(obj, number);
+                self.set_number(number);
             }
             _ => unimplemented!(),
         }
     }
 
-    fn property(&self, obj: &Self::Type, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
+    fn property(&self, _id: usize, pspec: &glib::ParamSpec) -> glib::Value {
         match pspec.name() {
-            "number" => self.number(obj).to_value(),
+            "number" => self.number().to_value(),
             _ => unimplemented!(),
         }
     }
@@ -72,17 +66,18 @@ impl FooImpl for Bar {
 }
 
 impl Bar {
-    fn set_number(&self, this: &super::Bar, num: f64) {
+    fn set_number(&self, num: f64) {
         *self.number.borrow_mut() = num;
-        this.notify("number");
+        self.obj().notify("number");
     }
 
-    fn number(&self, _this: &super::Bar) -> f64 {
-        *self.number.borrow_mut()
+    fn number(&self) -> f64 {
+        *self.number.borrow()
     }
 }
 
 pub(crate) mod ffi {
+    use glib::subclass::types::InstanceStructExt;
     use glib::translate::*;
     use libc::c_char;
 
@@ -93,8 +88,8 @@ pub(crate) mod ffi {
     /// Must be a BarInstance object.
     #[no_mangle]
     pub unsafe extern "C" fn ex_bar_get_number(this: *mut ExBar) -> f64 {
-        let imp = glib::subclass::types::InstanceStruct::imp(&*this);
-        imp.number(&from_glib_borrow(this))
+        let imp = (*this).imp();
+        imp.number()
     }
 
     /// # Safety
@@ -102,8 +97,8 @@ pub(crate) mod ffi {
     /// Must be a BarInstance object.
     #[no_mangle]
     pub unsafe extern "C" fn ex_bar_set_number(this: *mut ExBar, num: f64) {
-        let imp = glib::subclass::types::InstanceStruct::imp(&*this);
-        imp.set_number(&from_glib_borrow(this), num);
+        let imp = (*this).imp();
+        imp.set_number(num);
     }
 
     // GObject glue
@@ -115,8 +110,7 @@ pub(crate) mod ffi {
         let obj = glib::Object::new::<super::super::Bar>(&[(
             "name",
             &*glib::GString::from_glib_borrow(name),
-        )])
-        .unwrap();
+        )]);
         obj.to_glib_full()
     }
 
