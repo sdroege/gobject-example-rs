@@ -12,6 +12,7 @@ use glib::subclass::prelude::*;
 use glib::translate::*;
 
 use std::mem;
+use std::pin::Pin;
 
 use crate::nameable::Nameable;
 
@@ -44,7 +45,9 @@ pub trait FooExt {
 
     fn connect_incremented<F: Fn(&Self, i32, i32) + 'static>(&self, f: F) -> SignalHandlerId;
 
-    // TODO: add check_async() ?
+    fn check_future(
+        &self,
+    ) -> Pin<Box<dyn std::future::Future<Output = Result<(), glib::Error>> + 'static>>;
 }
 
 impl<O: IsA<Foo>> FooExt for O {
@@ -99,6 +102,61 @@ impl<O: IsA<Foo>> FooExt for O {
                 Box::into_raw(f),
             )
         }
+    }
+
+    fn check_future(
+        &self,
+    ) -> Pin<Box<dyn std::future::Future<Output = Result<(), glib::Error>> + 'static>> {
+        fn check_async<O: IsA<Foo>, P: FnOnce(Result<(), glib::Error>) + 'static>(
+            obj: &O,
+            cancellable: Option<&impl IsA<gio::Cancellable>>,
+            callback: P,
+        ) {
+            let main_context = glib::MainContext::ref_thread_default();
+            let is_main_context_owner = main_context.is_owner();
+            let has_acquired_main_context = (!is_main_context_owner)
+                .then(|| main_context.acquire().ok())
+                .flatten();
+            assert!(
+                is_main_context_owner || has_acquired_main_context.is_some(),
+                "Async operations only allowed if the thread is owning the MainContext"
+            );
+
+            let user_data: Box<glib::thread_guard::ThreadGuard<P>> =
+                Box::new(glib::thread_guard::ThreadGuard::new(callback));
+            unsafe extern "C" fn check_trampoline<P: FnOnce(Result<(), glib::Error>) + 'static>(
+                _source_object: *mut glib::gobject_ffi::GObject,
+                res: *mut gio::ffi::GAsyncResult,
+                user_data: glib::ffi::gpointer,
+            ) {
+                let mut error = std::ptr::null_mut();
+                let _ = ffi::ex_foo_check_finish(_source_object as *mut _, res, &mut error);
+                let result = if error.is_null() {
+                    Ok(())
+                } else {
+                    Err(from_glib_full(error))
+                };
+                let callback: Box<glib::thread_guard::ThreadGuard<P>> =
+                    Box::from_raw(user_data as *mut _);
+                let callback: P = callback.into_inner();
+                callback(result);
+            }
+            let callback = check_trampoline::<P>;
+            unsafe {
+                ffi::ex_foo_check_async(
+                    obj.as_ref().to_glib_none().0,
+                    cancellable.map(|p| p.as_ref()).to_glib_none().0,
+                    Some(callback),
+                    Box::into_raw(user_data) as *mut _,
+                );
+            }
+        }
+
+        Box::pin(gio::GioFuture::new(self, move |obj, cancellable, send| {
+            check_async(obj, Some(cancellable), move |res| {
+                send.resolve(res);
+            });
+        }))
     }
 }
 
@@ -207,5 +265,21 @@ mod tests {
 
         assert_eq!(foo.name(), Some("foo's name".into()));
         assert_eq!(foo.property_name(), Some("foo's name".into()));
+    }
+
+    #[test]
+    fn test_async() {
+        let foo = Foo::new(Some("foo's name"));
+
+        let c = glib::MainContext::default();
+        let l = glib::MainLoop::new(Some(&c), false);
+
+        let future = glib::clone!(@strong l => async move {
+            assert!(foo.check_future().await.is_ok());
+            l.quit();
+        });
+
+        c.spawn_local(future);
+        l.run();
     }
 }
