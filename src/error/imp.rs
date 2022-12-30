@@ -1,5 +1,5 @@
 #[derive(Clone, Copy, Debug, PartialEq, Eq, glib::ErrorDomain)]
-#[error_domain(name = "ExError")]
+#[error_domain(name = "ex-error")]
 pub enum Error {
     InvalidArgument,
     Failed,
