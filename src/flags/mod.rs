@@ -6,9 +6,7 @@ use imp::ffi;
 #[cfg(feature = "bindings")]
 mod ffi;
 
-use glib::{prelude::*, translate::*, Type};
-
-use bitflags::bitflags;
+use glib::{bitflags::bitflags, prelude::*, translate::*, Type};
 
 bitflags! {
     pub struct Flags: u32 {
