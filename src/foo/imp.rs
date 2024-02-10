@@ -3,7 +3,6 @@ use std::ops;
 
 use glib::prelude::*;
 use glib::subclass::prelude::*;
-use glib::ToValue;
 
 use crate::nameable::*;
 
@@ -89,13 +88,10 @@ impl ObjectImpl for Foo {
     fn properties() -> &'static [glib::ParamSpec] {
         use once_cell::sync::Lazy;
         static PROPERTIES: Lazy<Vec<glib::ParamSpec>> = Lazy::new(|| {
-            vec![glib::ParamSpecString::new(
-                "name",
-                "Name",
-                "Name of this object",
-                None,
-                glib::ParamFlags::READWRITE,
-            )]
+            vec![glib::ParamSpecString::builder("name")
+                .nick("Name")
+                .blurb("Name of this object")
+                .build()]
         });
 
         PROPERTIES.as_ref()
@@ -162,7 +158,7 @@ impl Foo {
 }
 
 pub(crate) mod ffi {
-    use glib::subclass::types::InstanceStructExt;
+    use super::*;
     use glib::translate::*;
     use std::ffi::{c_char, c_void};
 
@@ -204,13 +200,15 @@ pub(crate) mod ffi {
     /// Must be a valid C string, 0-terminated.
     #[no_mangle]
     pub unsafe extern "C" fn ex_foo_new(name: *const c_char) -> *mut ExFoo {
-        glib::Object::new::<super::super::Foo>(&[("name", &*glib::GString::from_glib_borrow(name))])
+        glib::Object::builder::<super::super::Foo>()
+            .property("name", &*glib::GString::from_glib_borrow(name))
+            .build()
             .to_glib_full()
     }
 
     #[no_mangle]
     pub extern "C" fn ex_foo_get_type() -> glib::ffi::GType {
-        <super::super::Foo as glib::StaticType>::static_type().into_glib()
+        <super::super::Foo as StaticType>::static_type().into_glib()
     }
 
     #[no_mangle]
@@ -226,8 +224,6 @@ pub(crate) mod ffi {
         let callback = callback.unwrap();
 
         let closure = move |task: gio::LocalTask<bool>, _: Option<&super::super::Foo>| {
-            use glib::Cast;
-
             let result: *mut gio::ffi::GAsyncResult =
                 task.upcast_ref::<gio::AsyncResult>().to_glib_none().0;
             callback(this as *mut _, result, user_data)

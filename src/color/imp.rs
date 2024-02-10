@@ -1,4 +1,4 @@
-use glib::translate::IntoGlib;
+use glib::{prelude::*, translate::*};
 
 #[derive(Debug, Copy, Clone, glib::Enum)]
 #[enum_type(name = "ExColor")]
@@ -9,8 +9,7 @@ pub enum Color {
 }
 
 pub(crate) mod ffi {
-    use glib::translate::*;
-    use glib::StaticType;
+    use super::*;
 
     pub type ExColor = <super::Color as super::IntoGlib>::GlibType;
 

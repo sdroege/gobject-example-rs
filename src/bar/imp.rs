@@ -27,15 +27,13 @@ impl ObjectImpl for Bar {
     fn properties() -> &'static [glib::ParamSpec] {
         use once_cell::sync::Lazy;
         static PROPERTIES: Lazy<Vec<glib::ParamSpec>> = Lazy::new(|| {
-            vec![glib::ParamSpecDouble::new(
-                "number",
-                "Number",
-                "Some number",
-                0.0,
-                100.0,
-                0.0,
-                glib::ParamFlags::READWRITE,
-            )]
+            vec![glib::ParamSpecDouble::builder("number")
+                .nick("Number")
+                .blurb("Some number")
+                .default_value(0.0)
+                .maximum(100.0)
+                .minimum(0.0)
+                .build()]
         });
 
         PROPERTIES.as_ref()
@@ -77,7 +75,7 @@ impl Bar {
 }
 
 pub(crate) mod ffi {
-    use glib::subclass::types::InstanceStructExt;
+    use super::*;
     use glib::translate::*;
     use std::ffi::c_char;
 
@@ -107,15 +105,14 @@ pub(crate) mod ffi {
     /// Must be a valid C string, 0-terminated.
     #[no_mangle]
     pub unsafe extern "C" fn ex_bar_new(name: *const c_char) -> *mut ExBar {
-        let obj = glib::Object::new::<super::super::Bar>(&[(
-            "name",
-            &*glib::GString::from_glib_borrow(name),
-        )]);
+        let obj = glib::Object::builder::<super::super::Bar>()
+            .property("name", &*glib::GString::from_glib_borrow(name))
+            .build();
         obj.to_glib_full()
     }
 
     #[no_mangle]
     pub extern "C" fn ex_bar_get_type() -> glib::ffi::GType {
-        <super::super::Bar as glib::StaticType>::static_type().into_glib()
+        <super::super::Bar as StaticType>::static_type().into_glib()
     }
 }
