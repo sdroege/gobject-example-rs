@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 use std::ops;
+use std::sync::OnceLock;
 
 use glib::prelude::*;
 use glib::subclass::prelude::*;
@@ -61,40 +62,38 @@ impl ObjectSubclass for Foo {
 
 impl ObjectImpl for Foo {
     fn signals() -> &'static [glib::subclass::Signal] {
-        use once_cell::sync::Lazy;
-        static SIGNALS: Lazy<Vec<glib::subclass::Signal>> = Lazy::new(|| {
-            vec![glib::subclass::Signal::builder("incremented")
-                .param_types([i32::static_type(), i32::static_type()])
-                .class_handler(|_, args| {
-                    let obj = args[0].get::<glib::Object>().unwrap();
-                    let val = args[1].get::<i32>().unwrap();
-                    let inc = args[2].get::<i32>().unwrap();
+        static SIGNALS: OnceLock<Vec<glib::subclass::Signal>> = OnceLock::new();
+        SIGNALS
+            .get_or_init(|| {
+                vec![glib::subclass::Signal::builder("incremented")
+                    .param_types([i32::static_type(), i32::static_type()])
+                    .class_handler(|_, args| {
+                        let obj = args[0].get::<glib::Object>().unwrap();
+                        let val = args[1].get::<i32>().unwrap();
+                        let inc = args[2].get::<i32>().unwrap();
 
-                    unsafe {
-                        let klass = &*(obj.object_class() as *const _ as *const FooClass);
-                        if let Some(ref func) = klass.incremented {
-                            func(obj.as_ptr() as *mut ffi::ExFoo, val, inc);
+                        unsafe {
+                            let klass = &*(obj.object_class() as *const _ as *const FooClass);
+                            if let Some(ref func) = klass.incremented {
+                                func(obj.as_ptr() as *mut ffi::ExFoo, val, inc);
+                            }
                         }
-                    }
 
-                    None
-                })
-                .build()]
-        });
-
-        SIGNALS.as_ref()
+                        None
+                    })
+                    .build()]
+            })
+            .as_ref()
     }
 
     fn properties() -> &'static [glib::ParamSpec] {
-        use once_cell::sync::Lazy;
-        static PROPERTIES: Lazy<Vec<glib::ParamSpec>> = Lazy::new(|| {
+        static PROPERTIES: OnceLock<Vec<glib::ParamSpec>> = OnceLock::new();
+        PROPERTIES.get_or_init(|| {
             vec![glib::ParamSpecString::builder("name")
                 .nick("Name")
                 .blurb("Name of this object")
                 .build()]
-        });
-
-        PROPERTIES.as_ref()
+        })
     }
 
     fn set_property(&self, _id: usize, value: &glib::Value, pspec: &glib::ParamSpec) {

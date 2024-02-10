@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::sync::OnceLock;
 
 use glib::prelude::*;
 use glib::subclass::prelude::*;
@@ -25,8 +26,8 @@ impl ObjectSubclass for Bar {
 
 impl ObjectImpl for Bar {
     fn properties() -> &'static [glib::ParamSpec] {
-        use once_cell::sync::Lazy;
-        static PROPERTIES: Lazy<Vec<glib::ParamSpec>> = Lazy::new(|| {
+        static PROPERTIES: OnceLock<Vec<glib::ParamSpec>> = OnceLock::new();
+        PROPERTIES.get_or_init(|| {
             vec![glib::ParamSpecDouble::builder("number")
                 .nick("Number")
                 .blurb("Some number")
@@ -34,9 +35,7 @@ impl ObjectImpl for Bar {
                 .maximum(100.0)
                 .minimum(0.0)
                 .build()]
-        });
-
-        PROPERTIES.as_ref()
+        })
     }
 
     fn set_property(&self, _id: usize, value: &glib::Value, pspec: &glib::ParamSpec) {
