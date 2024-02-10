@@ -85,11 +85,7 @@ impl<O: IsA<Foo>> FooExt for O {
             P: IsA<Foo>,
         {
             let f = &*(f as *const F);
-            f(
-                &*Foo::from_glib_borrow(this).unsafe_cast_ref::<P>(),
-                val,
-                inc,
-            )
+            f(Foo::from_glib_borrow(this).unsafe_cast_ref::<P>(), val, inc)
         }
         unsafe {
             let f: Box<F> = Box::new(f);

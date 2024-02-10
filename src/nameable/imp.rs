@@ -1,10 +1,10 @@
 use glib::subclass::prelude::*;
 use glib::translate::{from_glib_borrow, ToGlibPtr};
 
-use std::ffi::{c_char, c_void};
+use std::ffi::c_char;
 
 // Instance struct
-pub struct Nameable(c_void);
+pub struct Nameable;
 
 // Interface struct aka "vtable"
 //

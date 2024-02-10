@@ -74,7 +74,7 @@ impl Bar {
             P: IsA<Bar>,
         {
             let f = &*(f as *const F);
-            f(&*Bar::from_glib_borrow(this).unsafe_cast_ref::<P>())
+            f(Bar::from_glib_borrow(this).unsafe_cast_ref::<P>())
         }
         unsafe {
             let f: Box<F> = Box::new(f);
