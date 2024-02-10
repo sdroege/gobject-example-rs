@@ -6,8 +6,7 @@ pub enum Flags {
 }
 
 pub(crate) mod ffi {
-    use glib::translate::*;
-    use glib::StaticType;
+    use glib::{prelude::*, translate::*};
 
     pub type ExFlags = <super::Flags as IntoGlib>::GlibType;
 

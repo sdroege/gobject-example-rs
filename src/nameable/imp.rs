@@ -68,7 +68,10 @@ pub(crate) mod ffi {
     #[no_mangle]
     pub unsafe extern "C" fn ex_nameable_get_name(this: *mut ExNameable) -> *mut c_char {
         let wrapper = super::super::from_glib_borrow::<_, super::super::Nameable>(this);
-        let iface = <super::NameableInterface as glib::subclass::interface::ObjectInterfaceExt>::from_instance(&*wrapper);
+        let iface =
+            <super::NameableInterface as glib::subclass::interface::ObjectInterfaceExt>::from_obj(
+                &*wrapper,
+            );
         iface.get_name.map(|f| f(this)).unwrap_or(ptr::null_mut())
     }
 }

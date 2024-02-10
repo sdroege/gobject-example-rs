@@ -19,7 +19,7 @@ impl RString {
 }
 
 pub(crate) mod ffi {
-    use glib::translate::{from_glib_none, IntoGlib, ToGlibPtr};
+    use glib::{prelude::*, translate::*};
     use std::ffi::c_char;
 
     pub type ExRString = super::RString;
@@ -72,6 +72,6 @@ pub(crate) mod ffi {
     // GObject glue
     #[no_mangle]
     pub extern "C" fn ex_rstring_get_type() -> glib::ffi::GType {
-        <super::RString as glib::StaticType>::static_type().into_glib()
+        <super::RString as StaticType>::static_type().into_glib()
     }
 }

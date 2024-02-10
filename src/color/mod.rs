@@ -6,7 +6,7 @@ use imp::ffi;
 #[cfg(feature = "bindings")]
 mod ffi;
 
-use glib::{translate::*, StaticType, Type};
+use glib::{prelude::*, translate::*, Type};
 
 #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Clone, Copy)]
 #[non_exhaustive]
@@ -60,7 +60,7 @@ mod tests {
         assert!(t.is_a(glib::Type::ENUM));
         assert_eq!(t.name(), "ExColor");
 
-        let e = glib::EnumClass::new(t).unwrap();
+        let e = glib::EnumClass::with_type(t).unwrap();
         let v = e.value(1).unwrap();
         assert_eq!(v.name(), "Green");
         assert_eq!(v.nick(), "green");

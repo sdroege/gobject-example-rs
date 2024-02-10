@@ -6,9 +6,7 @@ use imp::ffi;
 #[cfg(feature = "bindings")]
 mod ffi;
 
-use glib::subclass::prelude::*;
-use glib::translate::*;
-use glib::IsA;
+use glib::{prelude::*, subclass::prelude::*, translate::*};
 
 glib::wrapper! {
     pub struct Nameable(Interface<ffi::ExNameable, ffi::ExNameableInterface>);
@@ -54,9 +52,9 @@ where
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::foo::Foo;
     use crate::nameable::{Nameable, NameableExt};
-    use glib::Cast;
 
     #[test]
     fn test_name() {
