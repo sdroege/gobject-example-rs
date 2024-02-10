@@ -1,5 +1,5 @@
 use glib::subclass::prelude::*;
-use glib::translate::{from_glib_borrow, ToGlibPtr};
+use glib::translate::*;
 
 use std::ffi::c_char;
 
@@ -48,7 +48,7 @@ impl NameableInterface {
 }
 
 pub(crate) mod ffi {
-    use glib::translate::IntoGlib;
+    use super::*;
     use std::ffi::c_char;
     use std::ptr;
 
@@ -57,8 +57,7 @@ pub(crate) mod ffi {
 
     #[no_mangle]
     pub extern "C" fn ex_nameable_get_type() -> glib::ffi::GType {
-        <super::NameableInterface as glib::subclass::interface::ObjectInterfaceType>::type_()
-            .into_glib()
+        <super::NameableInterface as ObjectInterfaceType>::type_().into_glib()
     }
 
     // Virtual method callers
@@ -68,10 +67,7 @@ pub(crate) mod ffi {
     #[no_mangle]
     pub unsafe extern "C" fn ex_nameable_get_name(this: *mut ExNameable) -> *mut c_char {
         let wrapper = super::super::from_glib_borrow::<_, super::super::Nameable>(this);
-        let iface =
-            <super::NameableInterface as glib::subclass::interface::ObjectInterfaceExt>::from_obj(
-                &*wrapper,
-            );
+        let iface = <super::NameableInterface as ObjectInterfaceExt>::from_obj(&*wrapper);
         iface.get_name.map(|f| f(this)).unwrap_or(ptr::null_mut())
     }
 }

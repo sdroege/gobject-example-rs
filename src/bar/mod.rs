@@ -6,7 +6,6 @@ use imp::ffi;
 #[cfg(feature = "bindings")]
 mod ffi;
 
-use glib::object::ObjectType;
 use glib::prelude::*;
 use glib::signal::{connect_raw, SignalHandlerId};
 use glib::translate::*;

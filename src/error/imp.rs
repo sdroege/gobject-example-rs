@@ -6,7 +6,7 @@ pub enum Error {
 }
 
 pub(crate) mod ffi {
-    use glib::translate::*;
+    use glib::{prelude::*, translate::*};
 
     pub type ExError = i32;
 
@@ -15,6 +15,6 @@ pub(crate) mod ffi {
 
     #[no_mangle]
     pub unsafe extern "C" fn ex_error_quark() -> glib::ffi::GQuark {
-        <super::Error as glib::error::ErrorDomain>::domain().into_glib()
+        <super::Error as ErrorDomain>::domain().into_glib()
     }
 }

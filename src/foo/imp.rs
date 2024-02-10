@@ -3,7 +3,7 @@ use std::ops;
 use std::sync::OnceLock;
 
 use glib::prelude::*;
-use glib::subclass::prelude::*;
+use glib::subclass::{prelude::*, Signal};
 
 use crate::nameable::*;
 
@@ -61,11 +61,11 @@ impl ObjectSubclass for Foo {
 }
 
 impl ObjectImpl for Foo {
-    fn signals() -> &'static [glib::subclass::Signal] {
-        static SIGNALS: OnceLock<Vec<glib::subclass::Signal>> = OnceLock::new();
+    fn signals() -> &'static [Signal] {
+        static SIGNALS: OnceLock<Vec<Signal>> = OnceLock::new();
         SIGNALS
             .get_or_init(|| {
-                vec![glib::subclass::Signal::builder("incremented")
+                vec![Signal::builder("incremented")
                     .param_types([i32::static_type(), i32::static_type()])
                     .class_handler(|_, args| {
                         let obj = args[0].get::<glib::Object>().unwrap();
