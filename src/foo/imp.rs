@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::ops;
 use std::sync::OnceLock;
 
@@ -37,13 +37,13 @@ impl ops::DerefMut for FooClass {
 
 // Our private state for the class
 //
-// We use RefCells here for each field as GObject conceptually uses interior mutability everywhere.
+// We use RefCell/Cells here for each field as GObject conceptually uses interior mutability everywhere.
 // If this was to be used from multiple threads, these would have to be mutexes or otherwise
 // Sync+Send
 #[derive(Debug, Default)]
 pub struct Foo {
     name: RefCell<Option<String>>,
-    counter: RefCell<i32>,
+    counter: Cell<i32>,
 }
 
 #[glib::object_subclass]
@@ -125,13 +125,15 @@ impl Foo {
     // Safe implementations. These take the wrapper type, and not &Self, as first argument
     //
     fn increment(&self, inc: i32) -> i32 {
-        let mut val = self.counter.borrow_mut();
+        let mut val = self.counter();
 
-        *val += inc;
+        val += inc;
 
-        self.obj().emit_by_name::<()>("incremented", &[&*val, &inc]);
+        self.counter.set(val);
 
-        *val
+        self.obj().emit_by_name::<()>("incremented", &[&val, &inc]);
+
+        val
     }
 
     fn incremented(&self, _val: i32, _inc: i32) {
@@ -140,7 +142,7 @@ impl Foo {
     }
 
     fn counter(&self) -> i32 {
-        *self.counter.borrow()
+        self.counter.get()
     }
 
     fn name(&self) -> Option<String> {

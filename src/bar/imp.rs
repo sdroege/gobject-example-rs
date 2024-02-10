@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::Cell;
 use std::sync::OnceLock;
 
 use glib::prelude::*;
@@ -9,12 +9,12 @@ use crate::foo::*;
 // We could put our data into the Bar struct above but that's discouraged nowadays so let's just
 // keep it all in Bar
 //
-// We use RefCells here for each field as GObject conceptually uses interior mutability everywhere.
+// We use Cell/RefCell here for each field as GObject conceptually uses interior mutability everywhere.
 // If this was to be used from multiple threads, these would have to be mutexes or otherwise
 // Sync+Send
 #[derive(Debug, Default)]
 pub struct Bar {
-    number: RefCell<f64>,
+    number: Cell<f64>,
 }
 
 #[glib::object_subclass]
@@ -64,12 +64,12 @@ impl FooImpl for Bar {
 
 impl Bar {
     fn set_number(&self, num: f64) {
-        *self.number.borrow_mut() = num;
+        self.number.set(num);
         self.obj().notify("number");
     }
 
     fn number(&self) -> f64 {
-        *self.number.borrow()
+        self.number.get()
     }
 }
 
