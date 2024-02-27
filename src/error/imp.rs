@@ -6,7 +6,8 @@ pub enum Error {
 }
 
 pub(crate) mod ffi {
-    use glib::{prelude::*, translate::*};
+    use glib::error::ErrorDomain;
+    use glib::translate::IntoGlib;
 
     pub type ExError = i32;
 
