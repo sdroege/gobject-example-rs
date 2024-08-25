@@ -3,61 +3,65 @@ use glib::translate::*;
 
 use std::ffi::c_char;
 
-// Instance struct
-pub struct Nameable;
+// Type implementing ObjectInterface. Use a uninhabited enum to make the type uninstantiatable.
+pub enum Nameable {}
 
-// Interface struct aka "vtable"
-//
-// Here we would store virtual methods and similar
-#[derive(Clone, Copy)]
-#[repr(C)]
-pub struct NameableInterface {
-    pub parent_iface: glib::gobject_ffi::GTypeInterface,
-    pub get_name: Option<unsafe extern "C" fn(*mut Nameable) -> *mut c_char>,
-}
-
-#[glib::object_interface]
-unsafe impl ObjectInterface for NameableInterface {
-    const NAME: &'static str = "ExNameable";
-    type Prerequisites = (glib::Object,);
-
-    // Interface struct initialization, called from GObject
-    fn interface_init(&mut self) {
-        // TODO: Could also add signals here, and interface properties via
-        // g_object_interface_install_property()
-        self.get_name = Some(get_name_default_trampoline);
-    }
-}
-
-//
-// Virtual method implementations / trampolines to safe implementations
-//
-// The default implementations are optional!
-//
-unsafe extern "C" fn get_name_default_trampoline(this: *mut Nameable) -> *mut c_char {
-    NameableInterface::name_default(&from_glib_borrow(this)).to_glib_full()
-}
-
-//
-// Safe implementations. These take the wrapper type, and not &Self, as first argument
-//
-impl NameableInterface {
-    fn name_default(_this: &super::Nameable) -> Option<String> {
+// Default implementation of the interface methods (note: these are optional)
+impl Nameable {
+    fn name_default() -> Option<String> {
         None
     }
 }
 
+#[glib::object_interface]
+impl ObjectInterface for Nameable {
+    const NAME: &'static str = "ExNameable";
+    type Instance = ffi::ExNameable;
+    type Interface = ffi::ExNameableInterface;
+    type Prerequisites = (glib::Object,);
+
+    // Interface struct initialization, called from GObject
+    fn interface_init(iface: &mut Self::Interface) {
+        // Optionally set the default implementation
+        iface.get_name = Some(get_name_default_trampoline);
+
+        // TODO: Could also add signals here, and interface properties via
+        // g_object_interface_install_property()
+    }
+}
+
+// trampoline to safe implementation
+unsafe extern "C" fn get_name_default_trampoline(_this: *mut ffi::ExNameable) -> *mut c_char {
+    Nameable::name_default().to_glib_full()
+}
+
 pub(crate) mod ffi {
     use super::*;
+    use glib::object::ObjectExt;
     use std::ffi::c_char;
     use std::ptr;
 
-    pub type ExNameable = super::Nameable;
-    pub type ExNameableInterface = super::NameableInterface;
+    // Instance struct, to be used as pointer to "self" in ffi methods
+    #[repr(C)]
+    pub struct ExNameable(std::ffi::c_void);
+
+    // Interface struct aka "vtable"
+    //
+    // Here we would store virtual methods and similar
+    #[derive(Clone, Copy)]
+    #[repr(C)]
+    pub struct ExNameableInterface {
+        pub parent_iface: glib::gobject_ffi::GTypeInterface,
+        pub get_name: Option<unsafe extern "C" fn(*mut ExNameable) -> *mut c_char>,
+    }
+
+    unsafe impl InterfaceStruct for ExNameableInterface {
+        type Type = super::Nameable;
+    }
 
     #[no_mangle]
     pub extern "C" fn ex_nameable_get_type() -> glib::ffi::GType {
-        <super::NameableInterface as ObjectInterfaceType>::type_().into_glib()
+        <super::Nameable as ObjectInterfaceType>::type_().into_glib()
     }
 
     // Virtual method callers
@@ -66,8 +70,12 @@ pub(crate) mod ffi {
     /// Must be a Nameable interface.
     #[no_mangle]
     pub unsafe extern "C" fn ex_nameable_get_name(this: *mut ExNameable) -> *mut c_char {
-        let wrapper = super::super::from_glib_borrow::<_, super::super::Nameable>(this);
-        let iface = <super::NameableInterface as ObjectInterfaceExt>::from_obj(&*wrapper);
-        iface.get_name.map(|f| f(this)).unwrap_or(ptr::null_mut())
+        let wrapper = from_glib_borrow::<_, super::super::Nameable>(this);
+        let iface = wrapper.interface::<super::super::Nameable>().unwrap();
+        iface
+            .as_ref()
+            .get_name
+            .map(|f| f(this))
+            .unwrap_or(ptr::null_mut())
     }
 }
