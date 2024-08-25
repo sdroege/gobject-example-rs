@@ -8,27 +8,55 @@ mod ffi;
 
 use glib::{prelude::*, subclass::prelude::*, translate::*};
 
+#[cfg(feature = "bindings")]
 glib::wrapper! {
-    pub struct Nameable(Interface<ffi::ExNameable, ffi::ExNameableInterface>);
+    pub struct Nameable(Interface<ffi::Nameable, ffi::Interface>);
 
     match fn {
         type_ => || ffi::ex_nameable_get_type(),
     }
 }
 
-pub trait NameableExt {
-    fn name(&self) -> Option<String>;
+#[cfg(not(feature = "bindings"))]
+glib::wrapper! {
+    pub struct Nameable(ObjectInterface<imp::Nameable>);
 }
 
-impl<O: IsA<Nameable>> NameableExt for O {
+pub trait NameableExt: IsA<Nameable> {
     fn name(&self) -> Option<String> {
-        unsafe { from_glib_full(ffi::ex_nameable_get_name(self.as_ref().to_glib_none().0)) }
+        let iface = self.interface::<Nameable>().unwrap();
+        unsafe {
+            from_glib_full(((iface.as_ref()).get_name.unwrap())(
+                self.upcast_ref::<Nameable>().to_glib_none().0,
+            ))
+        }
     }
 }
 
+impl<O: IsA<Nameable>> NameableExt for O {}
+
 pub trait NameableImpl: ObjectImpl {
-    fn name(&self) -> Option<String>;
+    fn name(&self) -> Option<String> {
+        self.parent_name()
+    }
 }
+
+pub trait NameableImplExt: NameableImpl {
+    fn parent_name(&self) -> Option<String> {
+        let data = Self::type_data();
+        let parent_iface = unsafe {
+            &*(data.as_ref().parent_interface::<Nameable>() as *const ffi::ExNameableInterface)
+        };
+
+        unsafe {
+            from_glib_full((parent_iface.get_name.unwrap())(
+                self.obj().unsafe_cast_ref::<Nameable>().to_glib_none().0,
+            ))
+        }
+    }
+}
+
+impl<T: NameableImpl> NameableImplExt for T {}
 
 unsafe impl<T: ObjectSubclass + NameableImpl> IsImplementable<T> for Nameable {
     fn interface_init(iface: &mut glib::Interface<Self>) {
